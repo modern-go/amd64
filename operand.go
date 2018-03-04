@@ -1,6 +1,9 @@
 package amd64
 
+import "fmt"
+
 type Operand interface {
+	fmt.Stringer
 	// isOperand is unexported prevents external packages from
 	// implementing Operand.
 	isOperand()
@@ -25,49 +28,79 @@ func (i Imm) ModRM(asm *Assembler, reg Register) {
 	panic("Imm.ModRM")
 }
 
+func (i Imm) String() string {
+	return fmt.Sprintf("%v", i.Val)
+}
+
 type Register struct {
+	Desc string
 	Val  byte
 	Bits byte
 }
 
 func (r Register) isOperand() {}
-func (i Register) Rex(asm *Assembler, reg Register) {
-	asm.rexBits(i.Bits, reg.Bits, reg.Val > 7, false, i.Val > 7)
+func (r Register) Rex(asm *Assembler, reg Register) {
+	asm.rexBits(r.Bits, reg.Bits, reg.Val > 7, false, r.Val > 7)
 }
 
 func (r Register) ModRM(asm *Assembler, reg Register) {
 	asm.modrm(MOD_REG, reg.Val&7, r.Val&7)
 }
 
+func (r Register) String() string {
+	return r.Desc
+}
+
 
 type Indirect struct {
-	Base   Register
-	Offset int32
-	Bits   byte
+	base   Register
+	offset int32
+	bits   byte
 }
 
 func (i Indirect) short() bool {
-	return int32(int8(i.Offset)) == i.Offset
+	return int32(int8(i.offset)) == i.offset
 }
 
 func (i Indirect) isOperand() {}
 func (i Indirect) Rex(asm *Assembler, reg Register) {
-	asm.rexBits(reg.Bits, i.Bits, reg.Val > 7, false, i.Base.Val > 7)
+	asm.rexBits(reg.Bits, i.bits, reg.Val > 7, false, i.base.Val > 7)
 }
 
 func (i Indirect) ModRM(asm *Assembler, reg Register) {
-	if i.Base.Val == REG_SIB {
-		SIB{i.Offset, ESP, ESP, Scale1}.ModRM(asm, reg)
+	if i.base.Val == REG_SIB {
+		SIB{i.offset, ESP, ESP, Scale1}.ModRM(asm, reg)
 		return
 	}
-	if i.Offset == 0 {
-		asm.modrm(MOD_INDIR, reg.Val&7, i.Base.Val&7)
+	if i.offset == 0 {
+		asm.modrm(MOD_INDIR, reg.Val&7, i.base.Val&7)
 	} else if i.short() {
-		asm.modrm(MOD_INDIR_DISP8, reg.Val&7, i.Base.Val&7)
-		asm.byte(byte(i.Offset))
+		asm.modrm(MOD_INDIR_DISP8, reg.Val&7, i.base.Val&7)
+		asm.byte(byte(i.offset))
 	} else {
-		asm.modrm(MOD_INDIR_DISP32, reg.Val&7, i.Base.Val&7)
-		asm.int32(uint32(i.Offset))
+		asm.modrm(MOD_INDIR_DISP32, reg.Val&7, i.base.Val&7)
+		asm.int32(uint32(i.offset))
+	}
+}
+
+func (i Indirect) String() string {
+	sizeDirective := ""
+	switch i.bits {
+	case 64:
+		sizeDirective = "qword ptr"
+	case 32:
+		sizeDirective = "dword ptr"
+	case 16:
+		sizeDirective = "word ptr"
+	case 8:
+		sizeDirective = "byte ptr"
+	default:
+		sizeDirective = "invalid"
+	}
+	if i.offset >= 0 {
+		return fmt.Sprintf("%s [%v+%v]", sizeDirective, i.base, i.offset)
+	} else {
+		return fmt.Sprintf("%s [%v%v]", sizeDirective, i.base, i.offset)
 	}
 }
 

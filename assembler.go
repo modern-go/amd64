@@ -185,9 +185,9 @@ func arithmetic(asm *Assembler, insn *Instruction, dst, src Operand) {
 		if dr, ok := dst.(Register); ok {
 			asm.arithmeticImmReg(insn, s, dr)
 		} else {
-			dst.Rex(asm, Register{insn.imm_rm.sub, 0})
+			dst.Rex(asm, Register{"",insn.imm_rm.sub, 0})
 			asm.byte(insn.imm_rm.op.value())
-			dst.ModRM(asm, Register{insn.imm_rm.sub, 0})
+			dst.ModRM(asm, Register{"",insn.imm_rm.sub, 0})
 		}
 		if insn.bits == 8 {
 			asm.byte(byte(s.Val))
