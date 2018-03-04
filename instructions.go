@@ -14,10 +14,8 @@ var INC = &instruction{
 var DEC = &instruction{
 	Mnemonic: "dec",
 	opcode:   0xff,
+	regOpcode: 1,
 	assemble: oneOperand,
-	overrides: overrides{
-		"ModR/M r/m": byte(1),
-	},
 	variants: variants{
 		{{rm: 8}}: {opcode: 0xfe},
 		{{rm: 16}}: {},

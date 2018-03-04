@@ -100,44 +100,6 @@ func (a *Assembler) rel32(addr uintptr) {
 	a.int32(uint32(off))
 }
 
-func (a *Assembler) rex(w, r, x, b bool) {
-	var bits byte
-	if w {
-		bits |= REXW
-	}
-	if r {
-		bits |= REXR
-	}
-	if x {
-		bits |= REXX
-	}
-	if b {
-		bits |= REXB
-	}
-	if bits != 0 {
-		a.byte(PFX_REX | bits)
-	}
-}
-
-func (a *Assembler) rexBits(lsize, rsize byte, r, x, b bool) {
-	if lsize != 0 && rsize != 0 && lsize != rsize {
-		panic("mismatched instruction sizes")
-	}
-	lsize = lsize | rsize
-	if lsize == 0 {
-		lsize = 64
-	}
-	a.rex(lsize == 64, r, x, b)
-}
-
-func (a *Assembler) modrm(mod, reg, rm byte) {
-	a.byte((mod << 6) | (reg << 3) | rm)
-}
-
-func (a *Assembler) sib(s, i, b byte) {
-	a.byte((s << 6) | (i << 3) | b)
-}
-
 func (a *Assembler) MakeFunc(f interface{}) {
 	pagesCount := (len(a.Buffer) / PageSize) + 1
 	executableMem, err := syscall.Mmap(

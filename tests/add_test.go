@@ -10,6 +10,12 @@ func init() {
 		output: []uint8{
 			0x00, 0xc3,
 		},
-		selected: true,
+	}, {
+		input: input{
+			ADD, BYTE(RBX, 0), BL,
+		},
+		output: []uint8{
+			0x00, 0x03,
+		},
 	}}...)
 }

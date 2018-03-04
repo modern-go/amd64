@@ -12,6 +12,18 @@ func QWORD(base Register, offset int) Indirect {
 		}},
 	}
 }
+func BYTE(base Register, offset int) Indirect {
+	return Indirect{
+		base:   base,
+		offset: int32(offset),
+		bits:   8,
+		conditions: []condition{{
+			m: 8,
+		},{
+			rm: 8,
+		}},
+	}
+}
 
 var (
 	AL = Register{"al", 0, 8, []condition{

@@ -11,9 +11,10 @@ type Operand interface {
 	// implementing Operand.
 	isOperand()
 
-	Prefix(asm *Assembler, reg Register)
-	ModRM(asm *Assembler, reg Register)
+	Prefix(asm *Assembler, src Operand)
+	Operands(asm *Assembler, src Operand, regOpcode opcode)
 	Conditions() []condition
+	Bits() byte
 }
 
 type Imm struct {
@@ -29,7 +30,7 @@ func (i Imm) Rex(asm *Assembler, reg Register) {
 	panic("Imm.Rex")
 }
 func (i Imm) ModRM(asm *Assembler, reg Register) {
-	panic("Imm.ModRM")
+	panic("Imm.AssembleOperands")
 }
 
 func (i Imm) String() string {
@@ -45,10 +46,11 @@ type Register struct {
 
 func (r Register) isOperand() {}
 
-func (r Register) Prefix(asm *Assembler, reg Register) {
+func (r Register) Prefix(asm *Assembler, src Operand) {
 	switch r.bits {
 	case 64:
-		asm.rexBits(r.bits, reg.bits, reg.val > 7, false, r.val > 7)
+		srcReg, _ := src.(Register)
+		asm.byte(REX(r.bits == 64, srcReg.val > 7, false, r.val > 7))
 	case 32:
 	case 16:
 		asm.byte(0x66)
@@ -59,8 +61,8 @@ func (r Register) Prefix(asm *Assembler, reg Register) {
 	}
 }
 
-func (r Register) ModRM(asm *Assembler, reg Register) {
-	asm.modrm(MOD_REG, reg.val&7, r.val&7)
+func (r Register) Operands(asm *Assembler, src Operand, regOpcode opcode) {
+	asm.byte(MODRM(ModeReg, byte(regOpcode), r.val&7))
 }
 
 func (r Register) String() string {
@@ -69,6 +71,14 @@ func (r Register) String() string {
 
 func (r Register) Conditions() []condition {
 	return r.conditions
+}
+
+func (r Register) Value() byte {
+	return r.val
+}
+
+func (r Register) Bits() byte {
+	return r.bits
 }
 
 type Indirect struct {
@@ -84,7 +94,7 @@ func (i Indirect) short() bool {
 
 func (i Indirect) isOperand() {}
 
-func (i Indirect) Prefix(asm *Assembler, reg Register) {
+func (i Indirect) Prefix(asm *Assembler, src Operand) {
 	switch i.bits {
 	case 64:
 		switch i.base.bits {
@@ -95,7 +105,7 @@ func (i Indirect) Prefix(asm *Assembler, reg Register) {
 			asm.ReportError(errors.New("unsupported register"))
 			return
 		}
-		asm.rexBits(reg.bits, i.bits, reg.val > 7, false, i.base.val > 7)
+		asm.byte(REX(i.bits == 64, false, false, i.base.val > 7))
 	case 32:
 		panic("not implemented")
 	case 16:
@@ -105,24 +115,28 @@ func (i Indirect) Prefix(asm *Assembler, reg Register) {
 	}
 }
 
-func (i Indirect) ModRM(asm *Assembler, reg Register) {
-	if i.base.val == REG_SIB {
-		SIB{i.offset, ESP, ESP, Scale1}.ModRM(asm, reg)
-		return
-	}
+func (i Indirect) Operands(asm *Assembler, src Operand, regOpcode opcode) {
+	//if i.base.val == REG_SIB {
+	//	SIB{i.offset, ESP, ESP, Scale1}.AssembleOperands(asm, reg)
+	//	return
+	//}
 	if i.offset == 0 {
-		asm.modrm(MOD_INDIR, reg.val&7, i.base.val&7)
+		asm.byte(MODRM(ModeIndir, byte(regOpcode), i.base.val&7))
 	} else if i.short() {
-		asm.modrm(MOD_INDIR_DISP8, reg.val&7, i.base.val&7)
+		asm.byte(MODRM(ModeIndirDisp8, byte(regOpcode), i.base.val&7))
 		asm.byte(byte(i.offset))
 	} else {
-		asm.modrm(MOD_INDIR_DISP32, reg.val&7, i.base.val&7)
+		asm.byte(MODRM(ModeIndirDisp32, byte(regOpcode), i.base.val&7))
 		asm.int32(uint32(i.offset))
 	}
 }
 
 func (i Indirect) Conditions() []condition {
 	return i.conditions
+}
+
+func (i Indirect) Bits() byte {
+	return i.bits
 }
 
 func (i Indirect) String() string {
@@ -146,58 +160,58 @@ func (i Indirect) String() string {
 	}
 }
 
-type PCRel struct {
-	Addr uintptr
-}
+//type PCRel struct {
+//	Addr uintptr
+//}
+//
+//func (i PCRel) isOperand() {}
+//func (i PCRel) Rex(asm *Assembler, reg Register) {
+//	asm.rex(reg.bits == 64, reg.val > 7, false, false)
+//}
+//func (i PCRel) ModRM(asm *Assembler, reg Register) {
+//	asm.modrm(ModeIndir, reg.val&7, REG_DISP32)
+//	asm.rel32(i.Addr)
+//}
 
-func (i PCRel) isOperand() {}
-func (i PCRel) Rex(asm *Assembler, reg Register) {
-	asm.rex(reg.bits == 64, reg.val > 7, false, false)
-}
-func (i PCRel) ModRM(asm *Assembler, reg Register) {
-	asm.modrm(MOD_INDIR, reg.val&7, REG_DISP32)
-	asm.rel32(i.Addr)
-}
+//type Scale struct {
+//	scale byte
+//}
+//
+//var (
+//	Scale1 = Scale{SCALE_1}
+//	Scale2 = Scale{SCALE_2}
+//	Scale4 = Scale{SCALE_4}
+//	Scale8 = Scale{SCALE_8}
+//)
 
-type Scale struct {
-	scale byte
-}
-
-var (
-	Scale1 = Scale{SCALE_1}
-	Scale2 = Scale{SCALE_2}
-	Scale4 = Scale{SCALE_4}
-	Scale8 = Scale{SCALE_8}
-)
-
-type SIB struct {
-	Offset      int32
-	Base, Index Register
-	Scale       Scale
-}
-
-func (s SIB) isOperand() {}
-func (s SIB) Rex(asm *Assembler, reg Register) {
-	asm.rex(reg.bits == 64, reg.val > 7, s.Index.val > 7, s.Base.val > 7)
-}
-
-func (s SIB) short() bool {
-	return int32(int8(s.Offset)) == s.Offset
-}
-
-func (s SIB) ModRM(asm *Assembler, reg Register) {
-	if s.Offset != 0 {
-		if s.short() {
-			asm.modrm(MOD_INDIR_DISP8, reg.val&7, REG_SIB)
-			asm.sib(s.Scale.scale, s.Index.val&7, s.Base.val&7)
-			asm.byte(uint8(s.Offset))
-		} else {
-			asm.modrm(MOD_INDIR_DISP32, reg.val&7, REG_SIB)
-			asm.sib(s.Scale.scale, s.Index.val&7, s.Base.val&7)
-			asm.int32(uint32(s.Offset))
-		}
-	} else {
-		asm.modrm(MOD_INDIR, reg.val&7, REG_SIB)
-		asm.sib(s.Scale.scale, s.Index.val&7, s.Base.val&7)
-	}
-}
+//type SIB struct {
+//	Offset      int32
+//	Base, Index Register
+//	Scale       Scale
+//}
+//
+//func (s SIB) isOperand() {}
+//func (s SIB) Rex(asm *Assembler, reg Register) {
+//	asm.rex(reg.bits == 64, reg.val > 7, s.Index.val > 7, s.Base.val > 7)
+//}
+//
+//func (s SIB) short() bool {
+//	return int32(int8(s.Offset)) == s.Offset
+//}
+//
+//func (s SIB) AssembleOperands(asm *Assembler, reg Register) {
+//	if s.Offset != 0 {
+//		if s.short() {
+//			asm.modrm(ModeIndirDisp8, reg.val&7, REG_SIB)
+//			asm.sib(s.Scale.scale, s.Index.val&7, s.Base.val&7)
+//			asm.byte(uint8(s.Offset))
+//		} else {
+//			asm.modrm(ModeIndirDisp32, reg.val&7, REG_SIB)
+//			asm.sib(s.Scale.scale, s.Index.val&7, s.Base.val&7)
+//			asm.int32(uint32(s.Offset))
+//		}
+//	} else {
+//		asm.modrm(ModeIndir, reg.val&7, REG_SIB)
+//		asm.sib(s.Scale.scale, s.Index.val&7, s.Base.val&7)
+//	}
+//}

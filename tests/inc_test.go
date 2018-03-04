@@ -1,6 +1,8 @@
 package tests
 
-import . "github.com/modern-go/amd64"
+import (
+	. "github.com/modern-go/amd64"
+)
 
 func init() {
 	testCases = append(testCases, []testCase{{
@@ -9,7 +11,15 @@ func init() {
 		},
 		comment: "rex prefix not required because eax is 32 bit",
 		output: []uint8{
-			0xff, 0xc0,
+			0xff, aka(0xc0, MODRM(ModeReg, 0, EAX.Value())),
+		},
+		selected: true,
+	}, {
+		input: input{
+			INC, ECX,
+		},
+		output: []uint8{
+			0xff, MODRM(ModeReg, 0, ECX.Value()),
 		},
 	}, {
 		input: input{
@@ -17,7 +27,8 @@ func init() {
 		},
 		comment: "rax is 64 bit, requires rex prefix",
 		output: []uint8{
-			0x48, 0xff, 0xc0,
+			REX(true, false, false, false),
+			0xff, MODRM(ModeReg, 0, EAX.Value()),
 		},
 	}, {
 		input: input{
@@ -25,7 +36,7 @@ func init() {
 		},
 		comment: "al is 8 bit, has a different opcode",
 		output: []uint8{
-			0xfe, 0xc0,
+			0xfe, MODRM(ModeReg, 0, AL.Value()),
 		},
 	}, {
 		input: input{
