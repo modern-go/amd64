@@ -10,6 +10,7 @@ type Operand interface {
 
 	Rex(asm *Assembler, reg Register)
 	ModRM(asm *Assembler, reg Register)
+	Bits() byte
 }
 
 type Imm struct {
@@ -33,24 +34,27 @@ func (i Imm) String() string {
 }
 
 type Register struct {
-	Desc string
-	Val  byte
-	Bits byte
+	desc string
+	val  byte
+	bits byte
 }
 
 func (r Register) isOperand() {}
 func (r Register) Rex(asm *Assembler, reg Register) {
-	asm.rexBits(r.Bits, reg.Bits, reg.Val > 7, false, r.Val > 7)
+	asm.rexBits(r.bits, reg.bits, reg.val > 7, false, r.val > 7)
 }
 
 func (r Register) ModRM(asm *Assembler, reg Register) {
-	asm.modrm(MOD_REG, reg.Val&7, r.Val&7)
+	asm.modrm(MOD_REG, reg.val&7, r.val&7)
 }
 
 func (r Register) String() string {
-	return r.Desc
+	return r.desc
 }
 
+func (r Register) Bits() byte {
+	return r.bits
+}
 
 type Indirect struct {
 	base   Register
@@ -64,21 +68,21 @@ func (i Indirect) short() bool {
 
 func (i Indirect) isOperand() {}
 func (i Indirect) Rex(asm *Assembler, reg Register) {
-	asm.rexBits(reg.Bits, i.bits, reg.Val > 7, false, i.base.Val > 7)
+	asm.rexBits(reg.bits, i.bits, reg.val > 7, false, i.base.val > 7)
 }
 
 func (i Indirect) ModRM(asm *Assembler, reg Register) {
-	if i.base.Val == REG_SIB {
+	if i.base.val == REG_SIB {
 		SIB{i.offset, ESP, ESP, Scale1}.ModRM(asm, reg)
 		return
 	}
 	if i.offset == 0 {
-		asm.modrm(MOD_INDIR, reg.Val&7, i.base.Val&7)
+		asm.modrm(MOD_INDIR, reg.val&7, i.base.val&7)
 	} else if i.short() {
-		asm.modrm(MOD_INDIR_DISP8, reg.Val&7, i.base.Val&7)
+		asm.modrm(MOD_INDIR_DISP8, reg.val&7, i.base.val&7)
 		asm.byte(byte(i.offset))
 	} else {
-		asm.modrm(MOD_INDIR_DISP32, reg.Val&7, i.base.Val&7)
+		asm.modrm(MOD_INDIR_DISP32, reg.val&7, i.base.val&7)
 		asm.int32(uint32(i.offset))
 	}
 }
@@ -110,10 +114,10 @@ type PCRel struct {
 
 func (i PCRel) isOperand() {}
 func (i PCRel) Rex(asm *Assembler, reg Register) {
-	asm.rex(reg.Bits == 64, reg.Val > 7, false, false)
+	asm.rex(reg.bits == 64, reg.val > 7, false, false)
 }
 func (i PCRel) ModRM(asm *Assembler, reg Register) {
-	asm.modrm(MOD_INDIR, reg.Val&7, REG_DISP32)
+	asm.modrm(MOD_INDIR, reg.val&7, REG_DISP32)
 	asm.rel32(i.Addr)
 }
 
@@ -136,7 +140,7 @@ type SIB struct {
 
 func (s SIB) isOperand() {}
 func (s SIB) Rex(asm *Assembler, reg Register) {
-	asm.rex(reg.Bits == 64, reg.Val > 7, s.Index.Val > 7, s.Base.Val > 7)
+	asm.rex(reg.bits == 64, reg.val > 7, s.Index.val > 7, s.Base.val > 7)
 }
 
 func (s SIB) short() bool {
@@ -146,16 +150,16 @@ func (s SIB) short() bool {
 func (s SIB) ModRM(asm *Assembler, reg Register) {
 	if s.Offset != 0 {
 		if s.short() {
-			asm.modrm(MOD_INDIR_DISP8, reg.Val&7, REG_SIB)
-			asm.sib(s.Scale.scale, s.Index.Val&7, s.Base.Val&7)
+			asm.modrm(MOD_INDIR_DISP8, reg.val&7, REG_SIB)
+			asm.sib(s.Scale.scale, s.Index.val&7, s.Base.val&7)
 			asm.byte(uint8(s.Offset))
 		} else {
-			asm.modrm(MOD_INDIR_DISP32, reg.Val&7, REG_SIB)
-			asm.sib(s.Scale.scale, s.Index.Val&7, s.Base.Val&7)
+			asm.modrm(MOD_INDIR_DISP32, reg.val&7, REG_SIB)
+			asm.sib(s.Scale.scale, s.Index.val&7, s.Base.val&7)
 			asm.int32(uint32(s.Offset))
 		}
 	} else {
-		asm.modrm(MOD_INDIR, reg.Val&7, REG_SIB)
-		asm.sib(s.Scale.scale, s.Index.Val&7, s.Base.Val&7)
+		asm.modrm(MOD_INDIR, reg.val&7, REG_SIB)
+		asm.sib(s.Scale.scale, s.Index.val&7, s.Base.val&7)
 	}
 }

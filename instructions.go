@@ -3,7 +3,7 @@ package amd64
 var INC = &instruction{
 	Mnemonic: "inc",
 	opcode:   0xff,
-	assemble: one_operand,
+	assemble: oneOperand,
 }
 
 var MOV = ""
