@@ -46,6 +46,14 @@ var (
 		{r: 64},
 		{rm: 64},
 	}}
+	BL = Register{"bl", 3, 8, []condition{
+		{r: 8},
+		{rm: 8},
+	}}
+	BX = Register{"bl", 3, 16, []condition{
+		{r: 16},
+		{rm: 16},
+	}}
 	EBX = Register{"ebx", 3, 32, []condition{
 		{r: 32},
 		{rm: 32},

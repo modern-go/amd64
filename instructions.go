@@ -25,9 +25,16 @@ var DEC = &instruction{
 		{{rm: 64}}: {},
 	},
 }
+var ADD = &instruction{
+	Mnemonic: "add",
+	opcode: 0,
+	assemble: twoOperands,
+	variants: variants{
+		{{rm:8},{r:8}}:{},
+	},
+}
 
 var MOV = ""
-var ADD = ""
 var RET = ""
 
 var allInstructions = []*instruction{
