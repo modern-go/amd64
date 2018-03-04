@@ -1,8 +1,8 @@
 package amd64
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 )
 
 const RegESP = 4
@@ -126,7 +126,12 @@ func (i Indirect) Prefix(asm *Assembler, src Operand) {
 
 func (i Indirect) Operands(asm *Assembler, src Operand, regOpcode opcode) {
 	if i.offset == 0 {
-		asm.byte(MODRM(ModeIndir, byte(regOpcode), i.base.val&7))
+		if i.base.val == RegEBP {
+			asm.byte(MODRM(ModeIndirDisp8, byte(regOpcode), i.base.val&7))
+			asm.byte(0)
+		} else {
+			asm.byte(MODRM(ModeIndir, byte(regOpcode), i.base.val&7))
+		}
 	} else if i.short() {
 		asm.byte(MODRM(ModeIndirDisp8, byte(regOpcode), i.base.val&7))
 		asm.byte(byte(i.offset))
@@ -165,9 +170,28 @@ func (i Indirect) String() string {
 	}
 }
 
+type RipIndirect struct {
+	Indirect
+}
+
+func (i RipIndirect) Operands(asm *Assembler, src Operand, regOpcode opcode) {
+	asm.byte(MODRM(ModeIndir, byte(regOpcode), RegEBP))
+	asm.int32(uint32(i.offset))
+}
+
+type AbsoluteIndirect struct {
+	Indirect
+}
+
+func (i AbsoluteIndirect) Operands(asm *Assembler, src Operand, regOpcode opcode) {
+	asm.byte(MODRM(ModeIndir, byte(regOpcode), RegESP))
+	asm.byte(SIB(Scale1, RegESP, RegEBP))
+	asm.int32(uint32(i.offset))
+}
+
 type ScaledIndirect struct {
-	scale      byte
-	index      Register
+	scale byte
+	index Register
 	Indirect
 }
 

@@ -38,7 +38,7 @@ func init() {
 		},
 		comment: "al is 8 bit, has a different opcode",
 		output: []uint8{
-			aka(0xfe, INC.Variant([2]VariantKey{{RM:8}}).Opcode()),
+			aka(0xfe, INC.Variant([2]VariantKey{{RM: 8}}).Opcode()),
 			aka(0xc0, MODRM(ModeReg, 0, AL.Value())),
 		},
 	}, {
@@ -106,7 +106,7 @@ func init() {
 			INC, BYTE(RAX, 0),
 		},
 		output: []uint8{
-			aka(0xfe, INC.Variant([2]VariantKey{{RM:8}}).Opcode()),
+			aka(0xfe, INC.Variant([2]VariantKey{{RM: 8}}).Opcode()),
 			aka(0x00, MODRM(ModeIndir, 0, RAX.Value())),
 		},
 	}, {
@@ -115,7 +115,7 @@ func init() {
 		},
 		output: []uint8{
 			aka(0x67, Prefix32Bit),
-			aka(0xfe, INC.Variant([2]VariantKey{{RM:8}}).Opcode()),
+			aka(0xfe, INC.Variant([2]VariantKey{{RM: 8}}).Opcode()),
 			aka(0x00, MODRM(ModeIndir, 0, RAX.Value())),
 		},
 	}, {
@@ -183,12 +183,29 @@ func init() {
 		},
 	}, {
 		input: input{
+			INC, EBP,
+		},
+		output: []uint8{
+			aka(0xff, INC.Opcode()),
+			aka(0xc5, MODRM(ModeReg, 0, EBP.Value())),
+		},
+	}, {
+		input: input{
 			INC, RSP,
 		},
 		output: []uint8{
 			aka(0x48, REX(true, false, false, false)),
 			aka(0xff, INC.Opcode()),
 			aka(0xc4, MODRM(ModeReg, 0, ESP.Value())),
+		},
+	}, {
+		input: input{
+			INC, RBP,
+		},
+		output: []uint8{
+			aka(0x48, REX(true, false, false, false)),
+			aka(0xff, INC.Opcode()),
+			aka(0xc5, MODRM(ModeReg, 0, EBP.Value())),
 		},
 	}}...)
 }

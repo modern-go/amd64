@@ -8,9 +8,9 @@ const (
 )
 
 func MODRM(mod byte, reg byte, rm byte) byte {
-	return mod << 6 | reg << 3 | rm
+	return mod<<6 | reg<<3 | rm
 }
 
 func SIB(scale byte, index byte, base byte) byte {
-	return scale << 6 | index << 3 | base
+	return scale<<6 | index<<3 | base
 }

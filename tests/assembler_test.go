@@ -1,12 +1,12 @@
 package tests
 
 import (
-	"testing"
-	"github.com/modern-go/test"
 	"context"
 	"github.com/modern-go/amd64"
 	. "github.com/modern-go/amd64"
+	"github.com/modern-go/test"
 	"github.com/modern-go/test/must"
+	"testing"
 )
 
 func TestAssembler_MakeFunc(t *testing.T) {
@@ -16,7 +16,7 @@ func TestAssembler_MakeFunc(t *testing.T) {
 			Buffer: []uint8{
 				0x48, 0x8B, 0x44, 0x24, 0x08, // mov
 				0x48, 0x89, 0x44, 0x24, 0x10, // mov
-				0xc3,                         // ret
+				0xc3, // ret
 			},
 		}
 		assembler.MakeFunc(&ident)

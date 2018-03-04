@@ -1,97 +1,96 @@
 package amd64
 
 func QWORD(base Register, offset int) interface{} {
-	return Indirect{
-		base:   base,
-		offset: int32(offset),
-		bits:   64,
-		conditions: []VariantKey{{
-			M: 64,
-		}, {
-			RM: 64,
-		}},
-	}
+	return newIndirect(64, base, offset)
 }
 
 func QWORD_SIB(scale byte, index Register, base Register, offset int) interface{} {
-	return nil
+	return newSibIndirect(64, scale, index, base, offset)
 }
 
 func DWORD(base Register, offset int) interface{} {
-	if base.val == RegESP {
-		return DWORD_SIB(0, base, base, offset)
-	}
-	return Indirect{
-		base:   base,
-		offset: int32(offset),
-		bits:   32,
-		conditions: []VariantKey{{
-			M: 32,
-		}, {
-			RM: 32,
-		}},
-	}
+	return newIndirect(32, base, offset)
 }
 
 func DWORD_SIB(scale byte, index Register, base Register, offset int) interface{} {
+	return newSibIndirect(32, scale, index, base, offset)
+}
+
+func WORD(base Register, offset int) interface{} {
+	return newIndirect(16, base, offset)
+}
+
+func WORD_SIB(scale byte, index Register, base Register, offset int) ScaledIndirect {
+	return newSibIndirect(16, scale, index, base, offset)
+}
+
+func BYTE(base Register, offset int) interface{} {
+	return newIndirect(8, base, offset)
+}
+
+func BYTE_SIB(scale byte, index Register, base Register, offset int) ScaledIndirect {
+	return newSibIndirect(8, scale, index, base, offset)
+}
+
+func newIndirect(bits byte, base Register, offset int) interface{} {
+	if base.val == RegESP {
+		return DWORD_SIB(0, base, base, offset)
+	}
+	indirect := Indirect{
+		base:   base,
+		offset: int32(offset),
+		bits:   bits,
+		conditions: []VariantKey{{
+			M: bits,
+		}, {
+			RM: bits,
+		}},
+	}
+	switch base.desc {
+	case RIP.desc:
+		return RipIndirect{indirect}
+	case ABSOLUTE.desc:
+		return AbsoluteIndirect{indirect}
+	}
+	return indirect
+}
+
+func newSibIndirect(bits byte, scale byte, index Register, base Register, offset int) ScaledIndirect {
 	switch scale {
 	case 0:
 		if index.val != RegESP {
 			panic("scale 0 can only applied to esp")
 		}
-		scale = 0
+		scale = Scale1
 	case 1:
-		scale = 0
+		scale = Scale1
 	case 2:
-		scale = 1
+		scale = Scale2
 	case 4:
-		scale = 2
+		scale = Scale4
 	case 8:
-		scale = 3
+		scale = Scale8
 	default:
 		panic("invalid scale")
 	}
 	return ScaledIndirect{
-		scale:  scale,
-		index:  index,
+		scale: scale,
+		index: index,
 		Indirect: Indirect{
 			base:   base,
 			offset: int32(offset),
-			bits:   32,
+			bits:   bits,
 			conditions: []VariantKey{{
-				M: 32,
+				M: bits,
 			}, {
-				RM: 32,
+				RM: bits,
 			}},
 		},
 	}
 }
 
-func WORD(base Register, offset int) interface{} {
-	return Indirect{
-		base:   base,
-		offset: int32(offset),
-		bits:   16,
-		conditions: []VariantKey{{
-			M: 16,
-		}, {
-			RM: 16,
-		}},
-	}
-}
-
-func BYTE(base Register, offset int) interface{} {
-	return Indirect{
-		base:   base,
-		offset: int32(offset),
-		bits:   8,
-		conditions: []VariantKey{{
-			M: 8,
-		}, {
-			RM: 8,
-		}},
-	}
-}
+var RIP = Register{desc: "RIP", bits: 64}
+var ABSOLUTE = Register{desc: "ABSOLUTE", bits: 64}
 
 var (
 	AL = Register{"al", 0, 8, []VariantKey{

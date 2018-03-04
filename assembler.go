@@ -1,11 +1,11 @@
 package amd64
 
 import (
-	"syscall"
-	"unsafe"
-	"github.com/modern-go/reflect2"
 	"errors"
 	"fmt"
+	"github.com/modern-go/reflect2"
+	"syscall"
+	"unsafe"
 )
 
 const PageSize = 4096
