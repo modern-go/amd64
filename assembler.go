@@ -4,8 +4,8 @@ import (
 	"syscall"
 	"unsafe"
 	"github.com/modern-go/reflect2"
-	"fmt"
 	"errors"
+	"fmt"
 )
 
 const PageSize = 4096
@@ -23,7 +23,7 @@ func (a *Assembler) ReportError(err error) {
 
 func (a *Assembler) Assemble(instructions ...interface{}) {
 	for len(instructions) > 0 {
-		insn, _ := instructions[0].(*Instruction)
+		insn, _ := instructions[0].(*instruction)
 		if insn == nil {
 			a.ReportError(fmt.Errorf("not instruction: %v", instructions))
 			return
@@ -32,10 +32,10 @@ func (a *Assembler) Assemble(instructions ...interface{}) {
 		case func(a *Assembler):
 			assemble(a)
 			instructions = instructions[1:]
-		case func(a *Assembler, insn *Instruction):
+		case func(a *Assembler, insn *instruction):
 			assemble(a, insn)
 			instructions = instructions[1:]
-		case func(a *Assembler, insn *Instruction, operand1 Operand):
+		case func(a *Assembler, insn *instruction, operand1 Operand):
 			operand1, _ := instructions[1].(Operand)
 			if operand1 == nil {
 				a.ReportError(fmt.Errorf("not operand: %v", operand1))
@@ -43,7 +43,7 @@ func (a *Assembler) Assemble(instructions ...interface{}) {
 			}
 			assemble(a, insn, operand1)
 			instructions = instructions[2:]
-		case func(a *Assembler, insn *Instruction, operand1 Operand, operand2 Operand):
+		case func(a *Assembler, insn *instruction, operand1 Operand, operand2 Operand):
 			operand1, _ := instructions[1].(Operand)
 			if operand1 == nil {
 				a.ReportError(fmt.Errorf("not operand: %v", operand1))
@@ -154,65 +154,4 @@ func (a *Assembler) MakeFunc(f interface{}) {
 	typ := reflect2.TypeOf(f)
 	ptr := unsafe.Pointer(&executableMem)
 	typ.UnsafeSet(reflect2.PtrOf(f), unsafe.Pointer(&ptr))
-}
-
-func (a *Assembler) arithmeticImmReg(insn *Instruction, src Imm, dst Register) {
-	if insn.imm_r.ok() {
-		a.rex(false, false, false, dst.Val > 7)
-		a.byte(insn.imm_r.value() | (dst.Val & 7))
-	} else {
-		a.rex(dst.Bits == 64, false, dst.Val > 7, false)
-		a.byte(insn.imm_rm.op.value())
-		a.modrm(MOD_REG, insn.imm_rm.sub, dst.Val&7)
-	}
-}
-
-func (a *Assembler) arithmeticRegReg(insn *Instruction, dst Register, src Register) {
-	if insn.r_rm.ok() {
-		dst.Rex(a, src)
-		a.byte(insn.r_rm.value())
-		dst.ModRM(a, src)
-	} else {
-		src.Rex(a, dst)
-		a.byte(insn.rm_r.value())
-		src.ModRM(a, dst)
-	}
-}
-
-func arithmetic(asm *Assembler, insn *Instruction, dst, src Operand) {
-	switch s := src.(type) {
-	case Imm:
-		if dr, ok := dst.(Register); ok {
-			asm.arithmeticImmReg(insn, s, dr)
-		} else {
-			dst.Rex(asm, Register{"",insn.imm_rm.sub, 0})
-			asm.byte(insn.imm_rm.op.value())
-			dst.ModRM(asm, Register{"",insn.imm_rm.sub, 0})
-		}
-		if insn.bits == 8 {
-			asm.byte(byte(s.Val))
-		} else {
-			asm.int32(uint32(s.Val))
-		}
-		return
-	case Register:
-		if dr, ok := dst.(Register); ok {
-			asm.arithmeticRegReg(insn, dr, s)
-		} else {
-			dst.Rex(asm, s)
-			asm.byte(insn.r_rm.value())
-			dst.ModRM(asm, s)
-		}
-		return
-	}
-	// if the LHS is neither an immediate nor a register, the rhs
-	// must be a register
-	dr, ok := dst.(Register)
-	if !ok {
-		panic(fmt.Sprintf("arithmetic: %#v/%#v not supported!", src, dst))
-	}
-
-	src.Rex(asm, dr)
-	asm.byte(insn.rm_r.value())
-	src.ModRM(asm, dr)
 }

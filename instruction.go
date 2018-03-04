@@ -1,33 +1,12 @@
 package amd64
 
-type Instruction struct {
+type instruction struct {
 	Mnemonic string
+	opcode byte // default op code if not override by specific addressing modes
 	assemble interface{}
-	imm_r    maybeByte
-	imm_rm   ImmRm
-	r_rm     maybeByte
-	rm_r     maybeByte
-	bits     byte
 }
 
-type ImmRm struct {
-	op  maybeByte
-	sub byte
+func one_operand(a *Assembler, insn *instruction, operand1 Operand) {
+	a.byte(insn.opcode)
+	operand1.ModRM(a, Register{})
 }
-
-type maybeByte interface {
-	ok() bool
-	value() byte
-}
-
-type j struct {
-	val byte
-}
-
-func (j j) ok() bool    { return true }
-func (j j) value() byte { return j.val }
-
-type no struct{}
-
-func (n no) ok() bool    { return false }
-func (n no) value() byte { panic("no{}.value()!") }

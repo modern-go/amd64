@@ -9,7 +9,7 @@ func Dump(instructions ...interface{}) string {
 		} else {
 			desc = append(desc, '\n')
 		}
-		insn, _ := instructions[0].(*Instruction)
+		insn, _ := instructions[0].(*instruction)
 		instructions = instructions[1:]
 		if insn == nil {
 			desc = append(desc, " %invalid%"...)
@@ -19,10 +19,10 @@ func Dump(instructions ...interface{}) string {
 		operandsCount := 0
 		switch insn.assemble.(type) {
 		case func(a *Assembler):
-		case func(a *Assembler, insn *Instruction):
-		case func(a *Assembler, insn *Instruction, operand1 Operand):
+		case func(a *Assembler, insn *instruction):
+		case func(a *Assembler, insn *instruction, operand1 Operand):
 			operandsCount = 1
-		case func(a *Assembler, insn *Instruction, operand1 Operand, operand2 Operand):
+		case func(a *Assembler, insn *instruction, operand1 Operand, operand2 Operand):
 			operandsCount = 2
 		default:
 			desc = append(desc, " %unknown%"...)

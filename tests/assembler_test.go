@@ -46,12 +46,19 @@ type input []interface{}
 type testCase struct {
 	input    []interface{}
 	output   []byte
+	comment  string
 	selected bool
 }
 
 var testCases []testCase
 
 func TestAssembler_Write(t *testing.T) {
+	for _, tc := range testCases {
+		if tc.selected {
+			testCases = []testCase{tc}
+			break
+		}
+	}
 	for _, testCase := range testCases {
 		t.Run(Dump(testCase.input...), test.Case(func(ctx context.Context) {
 			assembler := amd64.Assembler{}
