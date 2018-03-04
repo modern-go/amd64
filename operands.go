@@ -9,9 +9,10 @@ func QWORD(base Register, offset int) Indirect {
 }
 
 var (
+	AL = Register{"al", 0, 8}
+	AX = Register{"ax", 0, 16}
 	EAX = Register{"eax", 0, 32}
 	RAX = Register{"rax", 0, 64}
-	AL = Register{"al", 0, 8}
 	ECX = Register{"ecx", 1, 32}
 	RCX = Register{"rcx", 1, 64}
 	EDX = Register{"edx", 2, 32}

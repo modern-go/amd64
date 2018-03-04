@@ -27,5 +27,13 @@ func init() {
 		output: []uint8{
 			0xfe, 0xc0,
 		},
+	}, {
+		input: input{
+			INC, AX,
+		},
+		comment: "ax is 16 bit, need 0x66 prefix",
+		output: []uint8{
+			0x66, 0xff, 0xc0,
+		},
 	}}...)
 }

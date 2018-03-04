@@ -16,7 +16,8 @@ func oneOperand(a *Assembler, insn *instruction, operand1 Operand) {
 	case 32:
 		a.byte(byte(insn.opcode))
 	case 16:
-		panic("not implemented")
+		a.byte(0x66)
+		a.byte(byte(insn.opcode))
 	case 8:
 		a.byte(byte(insn.rm8))
 	}
