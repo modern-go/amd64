@@ -20,7 +20,7 @@ func WORD(base Register, offset int) interface{} {
 	return newIndirect(16, base, offset)
 }
 
-func WORD_SIB(scale byte, index Register, base Register, offset int) ScaledIndirect {
+func WORD_SIB(scale byte, index Register, base Register, offset int) interface{} {
 	return newSibIndirect(16, scale, index, base, offset)
 }
 
@@ -28,7 +28,7 @@ func BYTE(base Register, offset int) interface{} {
 	return newIndirect(8, base, offset)
 }
 
-func BYTE_SIB(scale byte, index Register, base Register, offset int) ScaledIndirect {
+func BYTE_SIB(scale byte, index Register, base Register, offset int) interface{} {
 	return newSibIndirect(8, scale, index, base, offset)
 }
 
@@ -55,11 +55,14 @@ func newIndirect(bits byte, base Register, offset int) interface{} {
 	return indirect
 }
 
-func newSibIndirect(bits byte, scale byte, index Register, base Register, offset int) ScaledIndirect {
+func newSibIndirect(bits byte, scale byte, index Register, base Register, offset int) interface{} {
 	switch scale {
 	case 0:
 		if index.val != RegESP {
 			panic("scale 0 can only applied to esp")
+		}
+		if base.val != RegESP {
+			return newIndirect(bits, base, offset)
 		}
 		scale = Scale1
 	case 1:

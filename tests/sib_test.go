@@ -70,5 +70,14 @@ func init() {
 			aka(0x05, MODRM(ModeIndir, 0, RBP.Value())),
 			0x02, 0x00, 0x00, 0x00,
 		},
+	}, {
+		input: input{
+			INC, DWORD_SIB(0, RSP, RBP, 0),
+		},
+		output: []uint8{
+			aka(0xff, INC.Opcode()),
+			aka(0x45, MODRM(ModeIndirDisp8, 0, RBP.Value())),
+			0x00,
+		},
 	}}...)
 }
