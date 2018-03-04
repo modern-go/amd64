@@ -1,25 +1,93 @@
 package amd64
 
-func QWORD(base Register, offset int) Indirect {
+func QWORD(base Register, offset int) interface{} {
 	return Indirect{
 		base:   base,
 		offset: int32(offset),
 		bits:   64,
 		conditions: []VariantKey{{
 			M: 64,
-		},{
+		}, {
 			RM: 64,
 		}},
 	}
 }
-func BYTE(base Register, offset int) Indirect {
+
+func QWORD_SIB(scale byte, index Register, base Register, offset int) interface{} {
+	return nil
+}
+
+func DWORD(base Register, offset int) interface{} {
+	if base.val == RegESP {
+		return DWORD_SIB(0, base, base, offset)
+	}
+	return Indirect{
+		base:   base,
+		offset: int32(offset),
+		bits:   32,
+		conditions: []VariantKey{{
+			M: 32,
+		}, {
+			RM: 32,
+		}},
+	}
+}
+
+func DWORD_SIB(scale byte, index Register, base Register, offset int) interface{} {
+	switch scale {
+	case 0:
+		if index.val != RegESP {
+			panic("scale 0 can only applied to esp")
+		}
+		scale = 0
+	case 1:
+		scale = 0
+	case 2:
+		scale = 1
+	case 4:
+		scale = 2
+	case 8:
+		scale = 3
+	default:
+		panic("invalid scale")
+	}
+	return ScaledIndirect{
+		scale:  scale,
+		index:  index,
+		Indirect: Indirect{
+			base:   base,
+			offset: int32(offset),
+			bits:   32,
+			conditions: []VariantKey{{
+				M: 32,
+			}, {
+				RM: 32,
+			}},
+		},
+	}
+}
+
+func WORD(base Register, offset int) interface{} {
+	return Indirect{
+		base:   base,
+		offset: int32(offset),
+		bits:   16,
+		conditions: []VariantKey{{
+			M: 16,
+		}, {
+			RM: 16,
+		}},
+	}
+}
+
+func BYTE(base Register, offset int) interface{} {
 	return Indirect{
 		base:   base,
 		offset: int32(offset),
 		bits:   8,
 		conditions: []VariantKey{{
 			M: 8,
-		},{
+		}, {
 			RM: 8,
 		}},
 	}

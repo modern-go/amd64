@@ -63,6 +63,63 @@ func init() {
 		},
 	}, {
 		input: input{
+			INC, DWORD(RAX, 0),
+		},
+		comment: "32bit do not need rex prefix",
+		output: []uint8{
+			aka(0xff, INC.Opcode()),
+			aka(0x00, MODRM(ModeIndir, 0, RAX.Value())),
+		},
+	}, {
+		input: input{
+			INC, DWORD(EAX, 0),
+		},
+		comment: "32bit register need 0x67 prefi",
+		output: []uint8{
+			aka(0x67, Prefix32Bit),
+			aka(0xff, INC.Opcode()),
+			aka(0x00, MODRM(ModeIndir, 0, EAX.Value())),
+		},
+	}, {
+		input: input{
+			INC, WORD(RAX, 0),
+		},
+		comment: "16bit need 0x66 prefix",
+		output: []uint8{
+			aka(0x66, Prefix16Bit),
+			aka(0xff, INC.Opcode()),
+			aka(0x00, MODRM(ModeIndir, 0, RAX.Value())),
+		},
+	}, {
+		input: input{
+			INC, WORD(EAX, 0),
+		},
+		comment: "16bit need 0x66 prefix, eax need 0x67 prefix",
+		output: []uint8{
+			aka(0x67, Prefix32Bit),
+			aka(0x66, Prefix16Bit),
+			aka(0xff, INC.Opcode()),
+			aka(0x00, MODRM(ModeIndir, 0, EAX.Value())),
+		},
+	}, {
+		input: input{
+			INC, BYTE(RAX, 0),
+		},
+		output: []uint8{
+			aka(0xfe, INC.Variant([2]VariantKey{{RM:8}}).Opcode()),
+			aka(0x00, MODRM(ModeIndir, 0, RAX.Value())),
+		},
+	}, {
+		input: input{
+			INC, BYTE(EAX, 0),
+		},
+		output: []uint8{
+			aka(0x67, Prefix32Bit),
+			aka(0xfe, INC.Variant([2]VariantKey{{RM:8}}).Opcode()),
+			aka(0x00, MODRM(ModeIndir, 0, RAX.Value())),
+		},
+	}, {
+		input: input{
 			INC, QWORD(RAX, 0x10),
 		},
 		comment: "0x10 in the displacement",
@@ -115,6 +172,23 @@ func init() {
 			aka(0x48, REX(true, false, false, false)),
 			aka(0xff, INC.Opcode()),
 			aka(0x00, MODRM(ModeIndir, 0, RAX.Value())),
+		},
+	}, {
+		input: input{
+			INC, ESP,
+		},
+		output: []uint8{
+			aka(0xff, INC.Opcode()),
+			aka(0xc4, MODRM(ModeReg, 0, ESP.Value())),
+		},
+	}, {
+		input: input{
+			INC, RSP,
+		},
+		output: []uint8{
+			aka(0x48, REX(true, false, false, false)),
+			aka(0xff, INC.Opcode()),
+			aka(0xc4, MODRM(ModeReg, 0, ESP.Value())),
 		},
 	}}...)
 }

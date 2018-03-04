@@ -11,7 +11,6 @@ func init() {
 			aka(0x00, ADD.Opcode()),
 			aka(0xd8, MODRM(ModeReg, BL.Value(), AL.Value())),
 		},
-		selected: true,
 	}, {
 		input: input{
 			ADD, BYTE(RBX, 0), BL,

@@ -12,5 +12,5 @@ func MODRM(mod byte, reg byte, rm byte) byte {
 }
 
 func SIB(scale byte, index byte, base byte) byte {
-	return 0
+	return scale << 6 | index << 3 | base
 }
