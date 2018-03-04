@@ -14,12 +14,12 @@ func TestAssembler_Assemble(t *testing.T) {
 		var ident func(i int) int
 		assembler := amd64.Assembler{
 			Buffer: []uint8{
-				0x48, 0x8B, 0x44, 0x24, 0x08,
-				0x48, 0x89, 0x44, 0x24, 0x10,
-				0xc3, // ret
+				0x48, 0x8B, 0x44, 0x24, 0x08, // mov
+				0x48, 0x89, 0x44, 0x24, 0x10, // mov
+				0xc3,                         // ret
 			},
 		}
-		assembler.Assemble(&ident)
+		assembler.MakeFunc(&ident)
 		must.Nil(assembler.Error)
 		must.Equal(100, ident(100))
 	}))
@@ -29,13 +29,18 @@ func TestAssembler_Write(t *testing.T) {
 	t.Run("simple case", test.Case(func(ctx context.Context) {
 		var ident func(i int) int
 		assembler := amd64.Assembler{}
-		assembler.Write(
+		assembler.Assemble(
 			MOV, RAX, QWORD(RSP, 8),
 			MOV, QWORD(RSP, 16), RAX,
 			RET,
 		)
-		assembler.Assemble(&ident)
+		assembler.MakeFunc(&ident)
 		must.Nil(assembler.Error)
+		must.Equal([]uint8{
+			0x48, 0x8B, 0x44, 0x24, 0x08, // mov
+			0x48, 0x89, 0x44, 0x24, 0x10, // mov
+			0xc3,                         // ret
+		}, assembler.Buffer)
 		must.Equal(100, ident(100))
 	}))
 }
