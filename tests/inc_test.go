@@ -11,15 +11,16 @@ func init() {
 		},
 		comment: "rex prefix not required because eax is 32 bit",
 		output: []uint8{
-			0xff, aka(0xc0, MODRM(ModeReg, 0, EAX.Value())),
+			aka(0xff, INC.Opcode()),
+			aka(0xc0, MODRM(ModeReg, 0, EAX.Value())),
 		},
-		selected: true,
 	}, {
 		input: input{
 			INC, ECX,
 		},
 		output: []uint8{
-			0xff, MODRM(ModeReg, 0, ECX.Value()),
+			aka(0xff, INC.Opcode()),
+			aka(0xc1, MODRM(ModeReg, 0, ECX.Value())),
 		},
 	}, {
 		input: input{
@@ -27,8 +28,9 @@ func init() {
 		},
 		comment: "rax is 64 bit, requires rex prefix",
 		output: []uint8{
-			REX(true, false, false, false),
-			0xff, MODRM(ModeReg, 0, EAX.Value()),
+			aka(0x48, REX(true, false, false, false)),
+			aka(0xff, INC.Opcode()),
+			aka(0xc0, MODRM(ModeReg, 0, EAX.Value())),
 		},
 	}, {
 		input: input{
@@ -36,7 +38,8 @@ func init() {
 		},
 		comment: "al is 8 bit, has a different opcode",
 		output: []uint8{
-			0xfe, MODRM(ModeReg, 0, AL.Value()),
+			aka(0xfe, INC.Variant([2]VariantKey{{RM:8}}).Opcode()),
+			aka(0xc0, MODRM(ModeReg, 0, AL.Value())),
 		},
 	}, {
 		input: input{
@@ -44,7 +47,9 @@ func init() {
 		},
 		comment: "ax is 16 bit, need 0x66 prefix",
 		output: []uint8{
-			0x66, 0xff, 0xc0,
+			aka(0x66, Prefix16Bit),
+			aka(0xff, INC.Opcode()),
+			aka(0xc0, MODRM(ModeReg, 0, AX.Value())),
 		},
 	}, {
 		input: input{
@@ -52,15 +57,53 @@ func init() {
 		},
 		comment: "rax is 64 bit, need rex prefix",
 		output: []uint8{
-			0x48, 0xff, 0x00,
+			aka(0x48, REX(true, false, false, false)),
+			aka(0xff, INC.Opcode()),
+			aka(0x00, MODRM(ModeIndir, 0, RAX.Value())),
 		},
 	}, {
 		input: input{
-			INC, QWORD(RAX, 16),
+			INC, QWORD(RAX, 0x10),
 		},
-		comment: "16 in the displacement",
+		comment: "0x10 in the displacement",
 		output: []uint8{
-			0x48, 0xff, 0x40, 0x10,
+			aka(0x48, REX(true, false, false, false)),
+			aka(0xff, INC.Opcode()),
+			aka(0x40, MODRM(ModeIndirDisp8, 0, RAX.Value())),
+			0x10,
+		},
+	}, {
+		input: input{
+			INC, QWORD(RAX, 0x7f),
+		},
+		comment: "0x7f is still 8bit displacement",
+		output: []uint8{
+			aka(0x48, REX(true, false, false, false)),
+			aka(0xff, INC.Opcode()),
+			aka(0x40, MODRM(ModeIndirDisp8, 0, RAX.Value())),
+			0x7f,
+		},
+	}, {
+		input: input{
+			INC, QWORD(RAX, -0x7f),
+		},
+		comment: "-0x7f is still 8bit displacement",
+		output: []uint8{
+			aka(0x48, REX(true, false, false, false)),
+			aka(0xff, INC.Opcode()),
+			aka(0x40, MODRM(ModeIndirDisp8, 0, RAX.Value())),
+			0x81, // -0x7f
+		},
+	}, {
+		input: input{
+			INC, QWORD(RAX, 0x80),
+		},
+		comment: "0x80 need 32bit, so mode changed",
+		output: []uint8{
+			aka(0x48, REX(true, false, false, false)),
+			aka(0xff, INC.Opcode()),
+			aka(0x80, MODRM(ModeIndirDisp32, 0, RAX.Value())),
+			0x80, 0x00, 0x00, 0x00,
 		},
 	}, {
 		input: input{
@@ -68,7 +111,10 @@ func init() {
 		},
 		comment: "eax is 32bit, need 0x67 prefix",
 		output: []uint8{
-			0x67, 0x48, 0xff, 0x00,
+			aka(0x67, Prefix32Bit),
+			aka(0x48, REX(true, false, false, false)),
+			aka(0xff, INC.Opcode()),
+			aka(0x00, MODRM(ModeIndir, 0, RAX.Value())),
 		},
 	}}...)
 }

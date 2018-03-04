@@ -12,8 +12,8 @@ type Operand interface {
 	isOperand()
 
 	Prefix(asm *Assembler, src Operand)
-	Operands(asm *Assembler, src Operand, regOpcode opcode)
-	Conditions() []condition
+	Operands(asm *Assembler, src Operand, opcodeReg opcode)
+	Conditions() []VariantKey
 	Bits() byte
 }
 
@@ -41,7 +41,7 @@ type Register struct {
 	desc string
 	val  byte
 	bits byte
-	conditions []condition
+	conditions []VariantKey
 }
 
 func (r Register) isOperand() {}
@@ -53,7 +53,7 @@ func (r Register) Prefix(asm *Assembler, src Operand) {
 		asm.byte(REX(r.bits == 64, srcReg.val > 7, false, r.val > 7))
 	case 32:
 	case 16:
-		asm.byte(0x66)
+		asm.byte(Prefix16Bit)
 	case 8:
 	default:
 		asm.ReportError(errors.New("register size is invalid"))
@@ -62,14 +62,19 @@ func (r Register) Prefix(asm *Assembler, src Operand) {
 }
 
 func (r Register) Operands(asm *Assembler, src Operand, regOpcode opcode) {
-	asm.byte(MODRM(ModeReg, byte(regOpcode), r.val&7))
+	srcReg, isSrcReg := src.(Register)
+	if isSrcReg {
+		asm.byte(MODRM(ModeReg, byte(srcReg.val), r.val&7))
+	} else {
+		asm.byte(MODRM(ModeReg, byte(regOpcode), r.val&7))
+	}
 }
 
 func (r Register) String() string {
 	return r.desc
 }
 
-func (r Register) Conditions() []condition {
+func (r Register) Conditions() []VariantKey {
 	return r.conditions
 }
 
@@ -85,7 +90,7 @@ type Indirect struct {
 	base   Register
 	offset int32
 	bits   byte
-	conditions []condition
+	conditions []VariantKey
 }
 
 func (i Indirect) short() bool {
@@ -100,7 +105,7 @@ func (i Indirect) Prefix(asm *Assembler, src Operand) {
 		switch i.base.bits {
 		case 64:
 		case 32:
-			asm.byte(0x67)
+			asm.byte(Prefix32Bit)
 		default:
 			asm.ReportError(errors.New("unsupported register"))
 			return
@@ -131,7 +136,7 @@ func (i Indirect) Operands(asm *Assembler, src Operand, regOpcode opcode) {
 	}
 }
 
-func (i Indirect) Conditions() []condition {
+func (i Indirect) Conditions() []VariantKey {
 	return i.conditions
 }
 

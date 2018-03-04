@@ -7,16 +7,18 @@ func init() {
 		input: input{
 			DEC, EAX,
 		},
-		comment: "dec set opcode extension to 1",
+		comment: "dec set opcode reg to 1",
 		output: []uint8{
-			0xff, 0xc8,
+			aka(0xff, DEC.Opcode()),
+			aka(0xc8, MODRM(ModeReg, DEC.OpcodeReg(), EAX.Value())),
 		},
-	},{
+	}, {
 		input: input{
 			DEC, AL,
 		},
 		output: []uint8{
-			0xfe, 0xc8,
+			aka(0xfe, DEC.Variant([2]VariantKey{{RM: 8}}).Opcode()),
+			aka(0xc8, MODRM(ModeReg, DEC.OpcodeReg(), AL.Value())),
 		},
 	}}...)
 }

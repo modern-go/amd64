@@ -15,7 +15,7 @@ func Dump(instructions ...interface{}) string {
 			desc = append(desc, " %invalid%"...)
 			continue
 		}
-		desc = append(desc, insn.Mnemonic...)
+		desc = append(desc, insn.mnemonic...)
 		operandsCount := 0
 		switch insn.assemble.(type) {
 		case func(a *Assembler):

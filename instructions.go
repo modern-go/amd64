@@ -1,34 +1,34 @@
 package amd64
 
 var INC = &instruction{
-	Mnemonic: "inc",
+	mnemonic: "inc",
 	opcode:   0xff,
 	assemble: oneOperand,
 	variants: variants{
-		{{rm: 8}}: {opcode: 0xfe},
-		{{rm: 16}}: {},
-		{{rm: 32}}: {},
-		{{rm: 64}}: {},
+		{{RM: 8}}:  {opcode: 0xfe},
+		{{RM: 16}}: {},
+		{{RM: 32}}: {},
+		{{RM: 64}}: {},
 	},
 }
 var DEC = &instruction{
-	Mnemonic: "dec",
-	opcode:   0xff,
-	regOpcode: 1,
-	assemble: oneOperand,
+	mnemonic:  "dec",
+	opcode:    0xff,
+	opcodeReg: 1,
+	assemble:  oneOperand,
 	variants: variants{
-		{{rm: 8}}: {opcode: 0xfe},
-		{{rm: 16}}: {},
-		{{rm: 32}}: {},
-		{{rm: 64}}: {},
+		{{RM: 8}}:  {opcode: 0xfe},
+		{{RM: 16}}: {},
+		{{RM: 32}}: {},
+		{{RM: 64}}: {},
 	},
 }
 var ADD = &instruction{
-	Mnemonic: "add",
-	opcode: 0,
+	mnemonic: "add",
+	opcode:   0,
 	assemble: twoOperands,
 	variants: variants{
-		{{rm:8},{r:8}}:{},
+		{{RM: 8}, {R: 8}}: {},
 	},
 }
 

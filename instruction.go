@@ -4,25 +4,37 @@ import "errors"
 
 type opcode byte
 
-type variants map[[2]condition]*instruction
+type variants map[[2]VariantKey]*instruction
 type overrides map[string]interface{}
 
 type instruction struct {
-	Mnemonic string
+	mnemonic string
 	// if not match variant, this opcode will be used by default
-	opcode   opcode
-	assemble interface{}
-	variants map[[2]condition]*instruction
+	opcode opcode
 	// secondary opcode
 	opcode2 opcode
-	// regOpcode is encoded as reg in modrm
-	regOpcode opcode
+	// OpcodeReg is encoded as reg in modrm
+	opcodeReg opcode
+	assemble  interface{}
+	variants  map[[2]VariantKey]*instruction
 }
 
-type condition struct {
-	r  byte // register, size
-	m  byte // memory, size
-	rm byte // register or memory, size
+func (insn *instruction) Opcode() byte {
+	return byte(insn.opcode)
+}
+
+func (insn *instruction) Variant(key [2]VariantKey) *instruction {
+	return insn.variants[key]
+}
+
+func (insn *instruction) OpcodeReg() byte {
+	return byte(insn.opcodeReg)
+}
+
+type VariantKey struct {
+	R  byte // register, size
+	M  byte // memory, size
+	RM byte // register or memory, size
 }
 
 func (insn *instruction) initVariants() {
@@ -30,16 +42,19 @@ func (insn *instruction) initVariants() {
 		if variant.opcode == 0 {
 			variant.opcode = insn.opcode
 		}
-		if variant.regOpcode == 0 {
-			variant.regOpcode = insn.regOpcode
+		if variant.opcode2 == 0 {
+			variant.opcode2 = insn.opcode2
+		}
+		if variant.opcodeReg == 0 {
+			variant.opcodeReg = insn.opcodeReg
 		}
 	}
 }
 
-func (insn *instruction) findVariant(dst []condition, src []condition) *instruction {
+func (insn *instruction) findVariant(dst []VariantKey, src []VariantKey) *instruction {
 	if src == nil {
 		for _, c := range dst {
-			variant := insn.variants[[2]condition{c}]
+			variant := insn.variants[[2]VariantKey{c}]
 			if variant != nil {
 				return variant
 			}
@@ -48,7 +63,7 @@ func (insn *instruction) findVariant(dst []condition, src []condition) *instruct
 	}
 	for _, s := range src {
 		for _, d := range dst {
-			variant := insn.variants[[2]condition{d, s}]
+			variant := insn.variants[[2]VariantKey{d, s}]
 			if variant != nil {
 				return variant
 			}
@@ -66,7 +81,7 @@ func oneOperand(asm *Assembler, insn *instruction, dst Operand) {
 	insn = variant
 	dst.Prefix(asm, nil)
 	asm.byte(byte(insn.opcode))
-	dst.Operands(asm, nil, insn.regOpcode)
+	dst.Operands(asm, nil, insn.opcodeReg)
 }
 
 func twoOperands(asm *Assembler, insn *instruction, dst Operand, src Operand) {
@@ -79,5 +94,5 @@ func twoOperands(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 	dst.Prefix(asm, Register{})
 	asm.byte(byte(insn.opcode))
 	srcRegister, _ := src.(Register)
-	dst.Operands(asm, srcRegister, insn.regOpcode)
+	dst.Operands(asm, srcRegister, insn.opcodeReg)
 }
