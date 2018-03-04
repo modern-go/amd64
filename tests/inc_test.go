@@ -19,6 +19,13 @@ func init() {
 		output: []uint8{
 			0x48, 0xff, 0xc0,
 		},
-		selected: true,
+	}, {
+		input: input{
+			INC, AL,
+		},
+		comment: "al is 8 bit, has a different opcode",
+		output: []uint8{
+			0xfe, 0xc0,
+		},
 	}}...)
 }
