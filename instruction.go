@@ -17,9 +17,9 @@ type instruction struct {
 }
 
 type condition struct {
-	r byte // only register, size
-	m byte // only memory, size
-	rm byte // register or register based memory, size
+	r byte // register, size
+	m byte // memory, size
+	rm byte // register or memory, size
 }
 
 func (insn *instruction) initVariants() {
@@ -33,20 +33,28 @@ func (insn *instruction) initVariants() {
 	}
 }
 
-func oneOperand(a *Assembler, insn *instruction, operand1 Operand) {
-	variant := insn.variants[[2]condition{{rm: operand1.Bits()}}]
+func (insn *instruction) findVariant(dst []condition, src []condition) *instruction {
+	if src == nil {
+		for _, c := range dst {
+			variant := insn.variants[[2]condition{c}]
+			if variant != nil {
+				return variant
+			}
+		}
+		return nil
+	}
+	panic("not implemented")
+}
+
+func oneOperand(asm *Assembler, insn *instruction, dst Operand) {
+	variant := insn.findVariant(dst.Conditions(), nil)
 	if variant == nil {
-		a.ReportError(errors.New("no variant defined for this operand combination"))
+		asm.ReportError(errors.New("no variant defined for this operand combination"))
 		return
 	}
 	insn = variant
-	switch operand1.Bits() {
-	case 64:
-		operand1.Rex(a, Register{})
-	case 16:
-		a.byte(0x66)
-	}
-	a.byte(byte(insn.opcode))
+	dst.Prefix(asm, Register{})
+	asm.byte(byte(insn.opcode))
 	modrmRm, _ := insn.overrides["ModR/M r/m"].(byte)
-	operand1.ModRM(a, Register{val: modrmRm})
+	dst.ModRM(asm, Register{val: modrmRm})
 }

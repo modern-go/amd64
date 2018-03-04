@@ -35,5 +35,29 @@ func init() {
 		output: []uint8{
 			0x66, 0xff, 0xc0,
 		},
+	}, {
+		input: input{
+			INC, QWORD(RAX, 0),
+		},
+		comment: "rax is 64 bit, need rex prefix",
+		output: []uint8{
+			0x48, 0xff, 0x00,
+		},
+	}, {
+		input: input{
+			INC, QWORD(RAX, 16),
+		},
+		comment: "16 in the displacement",
+		output: []uint8{
+			0x48, 0xff, 0x40, 0x10,
+		},
+	}, {
+		input: input{
+			INC, QWORD(EAX, 0),
+		},
+		comment: "eax is 32bit, need 0x67 prefix",
+		output: []uint8{
+			0x67, 0x48, 0xff, 0x00,
+		},
 	}}...)
 }

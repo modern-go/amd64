@@ -1,6 +1,9 @@
 package amd64
 
-import "fmt"
+import (
+	"fmt"
+	"errors"
+)
 
 type Operand interface {
 	fmt.Stringer
@@ -8,9 +11,9 @@ type Operand interface {
 	// implementing Operand.
 	isOperand()
 
-	Rex(asm *Assembler, reg Register)
+	Prefix(asm *Assembler, reg Register)
 	ModRM(asm *Assembler, reg Register)
-	Bits() byte
+	Conditions() []condition
 }
 
 type Imm struct {
@@ -37,11 +40,23 @@ type Register struct {
 	desc string
 	val  byte
 	bits byte
+	conditions []condition
 }
 
 func (r Register) isOperand() {}
-func (r Register) Rex(asm *Assembler, reg Register) {
-	asm.rexBits(r.bits, reg.bits, reg.val > 7, false, r.val > 7)
+
+func (r Register) Prefix(asm *Assembler, reg Register) {
+	switch r.bits {
+	case 64:
+		asm.rexBits(r.bits, reg.bits, reg.val > 7, false, r.val > 7)
+	case 32:
+	case 16:
+		asm.byte(0x66)
+	case 8:
+	default:
+		asm.ReportError(errors.New("register size is invalid"))
+		return
+	}
 }
 
 func (r Register) ModRM(asm *Assembler, reg Register) {
@@ -52,14 +67,15 @@ func (r Register) String() string {
 	return r.desc
 }
 
-func (r Register) Bits() byte {
-	return r.bits
+func (r Register) Conditions() []condition {
+	return r.conditions
 }
 
 type Indirect struct {
 	base   Register
 	offset int32
 	bits   byte
+	conditions []condition
 }
 
 func (i Indirect) short() bool {
@@ -67,8 +83,26 @@ func (i Indirect) short() bool {
 }
 
 func (i Indirect) isOperand() {}
-func (i Indirect) Rex(asm *Assembler, reg Register) {
-	asm.rexBits(reg.bits, i.bits, reg.val > 7, false, i.base.val > 7)
+
+func (i Indirect) Prefix(asm *Assembler, reg Register) {
+	switch i.bits {
+	case 64:
+		switch i.base.bits {
+		case 64:
+		case 32:
+			asm.byte(0x67)
+		default:
+			asm.ReportError(errors.New("unsupported register"))
+			return
+		}
+		asm.rexBits(reg.bits, i.bits, reg.val > 7, false, i.base.val > 7)
+	case 32:
+		panic("not implemented")
+	case 16:
+		panic("not implemented")
+	case 8:
+		panic("not implemented")
+	}
 }
 
 func (i Indirect) ModRM(asm *Assembler, reg Register) {
@@ -85,6 +119,10 @@ func (i Indirect) ModRM(asm *Assembler, reg Register) {
 		asm.modrm(MOD_INDIR_DISP32, reg.val&7, i.base.val&7)
 		asm.int32(uint32(i.offset))
 	}
+}
+
+func (i Indirect) Conditions() []condition {
+	return i.conditions
 }
 
 func (i Indirect) String() string {
