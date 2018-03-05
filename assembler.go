@@ -28,7 +28,7 @@ func (a *Assembler) Assemble(instructions ...interface{}) {
 			a.ReportError(fmt.Errorf("not instruction: %v", instructions))
 			return
 		}
-		switch assemble := insn.assemble.(type) {
+		switch assemble := insn.encoding.(type) {
 		case func(a *Assembler):
 			assemble(a)
 			instructions = instructions[1:]
@@ -98,6 +98,17 @@ func (a *Assembler) rel32(addr uintptr) {
 		return
 	}
 	a.int32(uint32(off))
+}
+
+func (a *Assembler) imm(imm Immediate) {
+	switch imm.bits {
+	case 8:
+		a.byte(byte(imm.val))
+	case 16:
+		a.int16(uint16(imm.val))
+	case 32:
+		a.int32(imm.val)
+	}
 }
 
 func (a *Assembler) MakeFunc(f interface{}) {

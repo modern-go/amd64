@@ -1,6 +1,8 @@
 package amd64
 
-import "errors"
+import (
+	"errors"
+)
 
 type opcode byte
 
@@ -15,7 +17,7 @@ type instruction struct {
 	opcode2 opcode
 	// OpcodeReg is encoded as reg in modrm
 	opcodeReg opcode
-	assemble  interface{}
+	encoding  interface{}
 	variants  map[[2]VariantKey]*instruction
 }
 
@@ -32,11 +34,11 @@ func (insn *instruction) OpcodeReg() byte {
 }
 
 type VariantKey struct {
-	R  byte // register, size
-	M  byte // memory, size
-	RM byte // register or memory, size
-	IMM byte // immediate, size
-	XMM bool // xmm register
+	R   byte   // register, size
+	M   byte   // memory, size
+	RM  byte   // register or memory, size
+	IMM byte   // immediate, size
+	REG string // special register
 }
 
 func (insn *instruction) initVariants() {
@@ -53,7 +55,7 @@ func (insn *instruction) initVariants() {
 	}
 }
 
-func (insn *instruction) findVariant(dst []VariantKey, src []VariantKey) *instruction {
+func (insn *instruction) findVariant(asm *Assembler, dst []VariantKey, src []VariantKey) *instruction {
 	if src == nil {
 		for _, c := range dst {
 			variant := insn.variants[[2]VariantKey{c}]
@@ -61,6 +63,7 @@ func (insn *instruction) findVariant(dst []VariantKey, src []VariantKey) *instru
 				return variant
 			}
 		}
+		asm.ReportError(errors.New("no variant defined for this operand combination"))
 		return nil
 	}
 	for _, s := range src {
@@ -71,40 +74,47 @@ func (insn *instruction) findVariant(dst []VariantKey, src []VariantKey) *instru
 			}
 		}
 	}
+	asm.ReportError(errors.New("no variant defined for this operand combination"))
 	return nil
 }
 
 func oneOperand(asm *Assembler, insn *instruction, dst Operand) {
-	variant := insn.findVariant(dst.Conditions(), nil)
+	variant := insn.findVariant(asm, dst.Conditions(), nil)
 	if variant == nil {
-		asm.ReportError(errors.New("no variant defined for this operand combination"))
 		return
 	}
 	insn = variant
 	dst.Prefix(asm, nil)
 	asm.byte(byte(insn.opcode))
-	dst.Operands(asm, nil, insn.opcodeReg)
+	dst.Operands(asm, nil, encodingParams{
+		opcodeReg: insn.opcodeReg,
+	})
 }
 
 func twoOperands(asm *Assembler, insn *instruction, dst Operand, src Operand) {
-	variant := insn.findVariant(dst.Conditions(), src.Conditions())
+	variant := insn.findVariant(asm, dst.Conditions(), src.Conditions())
 	if variant == nil {
-		asm.ReportError(errors.New("no variant defined for this operand combination"))
 		return
 	}
 	insn = variant
-	dst.Prefix(asm, Register{})
-	asm.byte(byte(insn.opcode))
-	srcRegister, _ := src.(Register)
-	dst.Operands(asm, srcRegister, insn.opcodeReg)
-	if imm, isImm := src.(Immediate); isImm {
-		switch imm.bits {
-		case 8:
-			asm.byte(byte(imm.val))
-		case 16:
-			asm.int16(uint16(imm.val))
-		case 32:
-			asm.int32(imm.val)
-		}
+	if insn.encoding != nil {
+		encode := insn.encoding.(func(*Assembler,*instruction,Operand, Operand))
+		encode(asm, insn, dst, src)
+		return
 	}
+	dst.Prefix(asm, src)
+	asm.byte(byte(insn.opcode))
+	dst.Operands(asm, src, encodingParams{
+		opcodeReg: insn.opcodeReg,
+	})
+}
+
+// without MODRM
+func encodingI(asm *Assembler, insn *instruction, dst Operand, src Operand) {
+	dst.Prefix(asm, src)
+	asm.byte(byte(insn.opcode))
+	dst.Operands(asm, src, encodingParams{
+		opcodeReg: insn.opcodeReg,
+		withoutMODRM: true,
+	})
 }

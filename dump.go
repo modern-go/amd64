@@ -17,7 +17,7 @@ func Dump(instructions ...interface{}) string {
 		}
 		desc = append(desc, insn.mnemonic...)
 		operandsCount := 0
-		switch insn.assemble.(type) {
+		switch insn.encoding.(type) {
 		case func(a *Assembler):
 		case func(a *Assembler, insn *instruction):
 		case func(a *Assembler, insn *instruction, operand1 Operand):

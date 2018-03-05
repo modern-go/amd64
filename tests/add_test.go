@@ -51,6 +51,15 @@ func init() {
 			aka(0xC3, MODRM(ModeReg, 0, BL.Value())),
 			0x02,
 		},
+	}, {
+		input: input{
+			ADD, AL, IMM(2),
+		},
+		comment: "al,imm8",
+		output: []uint8{
+			aka(0x04, ADD.Variant([2]VariantKey{{REG:"al"},{IMM:8}}).Opcode()),
+			0x02,
+		},
 		selected: true,
 	}}...)
 }

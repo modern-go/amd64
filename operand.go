@@ -19,13 +19,18 @@ type Operand interface {
 	isOperand()
 
 	Prefix(asm *Assembler, src Operand)
-	Operands(asm *Assembler, src Operand, opcodeReg opcode)
+	Operands(asm *Assembler, src Operand, params encodingParams)
 	Conditions() []VariantKey
 	Bits() byte
 }
 
+type encodingParams struct {
+	opcodeReg    opcode
+	withoutMODRM bool
+}
+
 type Immediate struct {
-	val uint32
+	val  uint32
 	bits byte
 }
 
@@ -33,7 +38,7 @@ func (i Immediate) Prefix(asm *Assembler, src Operand) {
 	panic("can not use immediate as dst operand")
 }
 
-func (i Immediate) Operands(asm *Assembler, src Operand, regOpcode opcode) {
+func (i Immediate) Operands(asm *Assembler, src Operand, params encodingParams) {
 	panic("can not use immediate as dst operand")
 }
 
@@ -79,12 +84,17 @@ func (r Register) Prefix(asm *Assembler, src Operand) {
 	}
 }
 
-func (r Register) Operands(asm *Assembler, src Operand, regOpcode opcode) {
-	srcReg, isSrcReg := src.(Register)
-	if isSrcReg {
-		asm.byte(MODRM(ModeReg, byte(srcReg.val), r.val&7))
-	} else {
-		asm.byte(MODRM(ModeReg, byte(regOpcode), r.val&7))
+func (r Register) Operands(asm *Assembler, src Operand, params encodingParams) {
+	if !params.withoutMODRM {
+		srcReg, isSrcReg := src.(Register)
+		if isSrcReg {
+			asm.byte(MODRM(ModeReg, byte(srcReg.val), r.val&7))
+		} else {
+			asm.byte(MODRM(ModeReg, byte(params.opcodeReg), r.val&7))
+		}
+	}
+	if imm, isImm := src.(Immediate); isImm {
+		asm.imm(imm)
 	}
 }
 
@@ -139,19 +149,19 @@ func (i Indirect) Prefix(asm *Assembler, src Operand) {
 	}
 }
 
-func (i Indirect) Operands(asm *Assembler, src Operand, regOpcode opcode) {
+func (i Indirect) Operands(asm *Assembler, src Operand, params encodingParams) {
 	if i.offset == 0 {
 		if i.base.val == RegEBP {
-			asm.byte(MODRM(ModeIndirDisp8, byte(regOpcode), i.base.val&7))
+			asm.byte(MODRM(ModeIndirDisp8, byte(params.opcodeReg), i.base.val&7))
 			asm.byte(0)
 		} else {
-			asm.byte(MODRM(ModeIndir, byte(regOpcode), i.base.val&7))
+			asm.byte(MODRM(ModeIndir, byte(params.opcodeReg), i.base.val&7))
 		}
 	} else if i.short() {
-		asm.byte(MODRM(ModeIndirDisp8, byte(regOpcode), i.base.val&7))
+		asm.byte(MODRM(ModeIndirDisp8, byte(params.opcodeReg), i.base.val&7))
 		asm.byte(byte(i.offset))
 	} else {
-		asm.byte(MODRM(ModeIndirDisp32, byte(regOpcode), i.base.val&7))
+		asm.byte(MODRM(ModeIndirDisp32, byte(params.opcodeReg), i.base.val&7))
 		asm.int32(uint32(i.offset))
 	}
 }
@@ -189,8 +199,8 @@ type RipIndirect struct {
 	Indirect
 }
 
-func (i RipIndirect) Operands(asm *Assembler, src Operand, regOpcode opcode) {
-	asm.byte(MODRM(ModeIndir, byte(regOpcode), RegEBP))
+func (i RipIndirect) Operands(asm *Assembler, src Operand, params encodingParams) {
+	asm.byte(MODRM(ModeIndir, byte(params.opcodeReg), RegEBP))
 	asm.int32(uint32(i.offset))
 }
 
@@ -198,8 +208,8 @@ type AbsoluteIndirect struct {
 	Indirect
 }
 
-func (i AbsoluteIndirect) Operands(asm *Assembler, src Operand, regOpcode opcode) {
-	asm.byte(MODRM(ModeIndir, byte(regOpcode), RegESP))
+func (i AbsoluteIndirect) Operands(asm *Assembler, src Operand, params encodingParams) {
+	asm.byte(MODRM(ModeIndir, byte(params.opcodeReg), RegESP))
 	asm.byte(SIB(Scale1, RegESP, RegEBP))
 	asm.int32(uint32(i.offset))
 }
@@ -210,16 +220,16 @@ type ScaledIndirect struct {
 	Indirect
 }
 
-func (i ScaledIndirect) Operands(asm *Assembler, src Operand, regOpcode opcode) {
+func (i ScaledIndirect) Operands(asm *Assembler, src Operand, params encodingParams) {
 	if i.offset == 0 {
-		asm.byte(MODRM(ModeIndir, byte(regOpcode), RegESP))
+		asm.byte(MODRM(ModeIndir, byte(params.opcodeReg), RegESP))
 		asm.byte(SIB(i.scale, i.index.val&7, i.base.val&7))
 	} else if i.short() {
-		asm.byte(MODRM(ModeIndirDisp8, byte(regOpcode), RegESP))
+		asm.byte(MODRM(ModeIndirDisp8, byte(params.opcodeReg), RegESP))
 		asm.byte(SIB(i.scale, i.index.val&7, i.base.val&7))
 		asm.byte(byte(i.offset))
 	} else {
-		asm.byte(MODRM(ModeIndirDisp32, byte(regOpcode), RegESP))
+		asm.byte(MODRM(ModeIndirDisp32, byte(params.opcodeReg), RegESP))
 		asm.byte(SIB(i.scale, i.index.val&7, i.base.val&7))
 		asm.int32(uint32(i.offset))
 	}
