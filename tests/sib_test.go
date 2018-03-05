@@ -74,6 +74,7 @@ func init() {
 		input: input{
 			INC, DWORD_SIB(0, RSP, RBP, 0),
 		},
+		comment: "esp * 0 + ebp need to transform to non sib form",
 		output: []uint8{
 			aka(0xff, INC.Opcode()),
 			aka(0x45, MODRM(ModeIndirDisp8, 0, RBP.Value())),

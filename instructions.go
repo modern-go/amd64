@@ -25,10 +25,11 @@ var DEC = &instruction{
 }
 var ADD = &instruction{
 	mnemonic: "add",
-	opcode:   0,
+	opcode:   0x00,
 	assemble: twoOperands,
 	variants: variants{
 		{{RM: 8}, {R: 8}}: {},
+		{{RM: 16}, {R: 16}}: {opcode: 0x01},
 	},
 }
 
