@@ -16,6 +16,6 @@ asm.Assemble(
 // ident func does nothing
 // return identical value out
 var ident func(i int) int
-assembler.MakeFunc(&ident)
+asm.MakeFunc(&ident)
 fmt.Println(ident(100)) // will print 100
 ```
