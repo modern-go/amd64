@@ -9,7 +9,7 @@ func IMM(val uint32) interface{} {
 	} else if val < math.MaxUint16 {
 		bits = 16
 	}
-	return Immediate{val: val, bits: bits}
+	return Immediate{val: val, bits: bits, keys: []VariantKey{{IMM: bits}}}
 }
 
 func QWORD(base Register, offset int) interface{} {
@@ -46,13 +46,13 @@ func BYTE_SIB(scale byte, index Register, base Register, offset int) interface{}
 
 func newIndirect(bits byte, base Register, offset int) interface{} {
 	if base.val == RegESP {
-		return DWORD_SIB(0, base, base, offset)
+		return newSibIndirect(bits,0, base, base, offset)
 	}
 	indirect := Indirect{
 		base:   base,
 		offset: int32(offset),
 		bits:   bits,
-		conditions: []VariantKey{{
+		keys: []VariantKey{{
 			M: bits,
 		}, {
 			RM: bits,
@@ -95,7 +95,7 @@ func newSibIndirect(bits byte, scale byte, index Register, base Register, offset
 			base:   base,
 			offset: int32(offset),
 			bits:   bits,
-			conditions: []VariantKey{{
+			keys: []VariantKey{{
 				M: bits,
 			}, {
 				RM: bits,

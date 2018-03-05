@@ -14,13 +14,11 @@ const Scale8 = 3
 
 type Operand interface {
 	fmt.Stringer
-	// isOperand is unexported prevents external packages from
-	// implementing Operand.
-	isOperand()
 
-	Prefix(asm *Assembler, src Operand)
-	Operands(asm *Assembler, src Operand, params encodingParams)
-	Conditions() []VariantKey
+	isMemory() bool
+	prefix(asm *Assembler, src Operand)
+	operands(asm *Assembler, src Operand, params encodingParams)
+	variantKeys() []VariantKey
 	Bits() byte
 }
 
@@ -32,18 +30,19 @@ type encodingParams struct {
 type Immediate struct {
 	val  uint32
 	bits byte
+	keys []VariantKey
 }
 
-func (i Immediate) Prefix(asm *Assembler, src Operand) {
+func (i Immediate) prefix(asm *Assembler, src Operand) {
 	panic("can not use immediate as dst operand")
 }
 
-func (i Immediate) Operands(asm *Assembler, src Operand, params encodingParams) {
+func (i Immediate) operands(asm *Assembler, src Operand, params encodingParams) {
 	panic("can not use immediate as dst operand")
 }
 
-func (i Immediate) isOperand() {
-	panic("Imm.AssembleOperands")
+func (i Immediate) isMemory() bool {
+	return false
 }
 
 func (i Immediate) String() string {
@@ -54,22 +53,20 @@ func (i Immediate) Bits() byte {
 	return i.bits
 }
 
-func (i Immediate) Conditions() []VariantKey {
-	return []VariantKey{
-		{IMM: i.bits},
-	}
+func (i Immediate) variantKeys() []VariantKey {
+	return i.keys
 }
 
 type Register struct {
-	desc       string
-	val        byte
-	bits       byte
-	conditions []VariantKey
+	desc string
+	val  byte
+	bits byte
+	keys []VariantKey
 }
 
-func (r Register) isOperand() {}
+func (r Register) isMemory() bool { return false }
 
-func (r Register) Prefix(asm *Assembler, src Operand) {
+func (r Register) prefix(asm *Assembler, src Operand) {
 	switch r.bits {
 	case 64:
 		srcReg, _ := src.(Register)
@@ -84,7 +81,7 @@ func (r Register) Prefix(asm *Assembler, src Operand) {
 	}
 }
 
-func (r Register) Operands(asm *Assembler, src Operand, params encodingParams) {
+func (r Register) operands(asm *Assembler, src Operand, params encodingParams) {
 	if !params.withoutMODRM {
 		srcReg, isSrcReg := src.(Register)
 		if isSrcReg {
@@ -98,36 +95,38 @@ func (r Register) Operands(asm *Assembler, src Operand, params encodingParams) {
 	}
 }
 
-func (r Register) String() string {
-	return r.desc
-}
-
-func (r Register) Conditions() []VariantKey {
-	return r.conditions
-}
-
-func (r Register) Value() byte {
-	return r.val
+func (r Register) variantKeys() []VariantKey {
+	return r.keys
 }
 
 func (r Register) Bits() byte {
 	return r.bits
 }
 
+func (r Register) Value() byte {
+	return r.val
+}
+
+func (r Register) String() string {
+	return r.desc
+}
+
 type Indirect struct {
 	base       Register
 	offset     int32
 	bits       byte
-	conditions []VariantKey
+	keys []VariantKey
 }
 
 func (i Indirect) short() bool {
 	return int32(int8(i.offset)) == i.offset
 }
 
-func (i Indirect) isOperand() {}
+func (i Indirect) isMemory() bool {
+	return true
+}
 
-func (i Indirect) Prefix(asm *Assembler, src Operand) {
+func (i Indirect) prefix(asm *Assembler, src Operand) {
 	switch i.base.bits {
 	case 64:
 	case 32:
@@ -149,7 +148,7 @@ func (i Indirect) Prefix(asm *Assembler, src Operand) {
 	}
 }
 
-func (i Indirect) Operands(asm *Assembler, src Operand, params encodingParams) {
+func (i Indirect) operands(asm *Assembler, src Operand, params encodingParams) {
 	if i.offset == 0 {
 		if i.base.val == RegEBP {
 			asm.byte(MODRM(ModeIndirDisp8, byte(params.opcodeReg), i.base.val&7))
@@ -166,8 +165,8 @@ func (i Indirect) Operands(asm *Assembler, src Operand, params encodingParams) {
 	}
 }
 
-func (i Indirect) Conditions() []VariantKey {
-	return i.conditions
+func (i Indirect) variantKeys() []VariantKey {
+	return i.keys
 }
 
 func (i Indirect) Bits() byte {
@@ -199,7 +198,7 @@ type RipIndirect struct {
 	Indirect
 }
 
-func (i RipIndirect) Operands(asm *Assembler, src Operand, params encodingParams) {
+func (i RipIndirect) operands(asm *Assembler, src Operand, params encodingParams) {
 	asm.byte(MODRM(ModeIndir, byte(params.opcodeReg), RegEBP))
 	asm.int32(uint32(i.offset))
 }
@@ -208,7 +207,7 @@ type AbsoluteIndirect struct {
 	Indirect
 }
 
-func (i AbsoluteIndirect) Operands(asm *Assembler, src Operand, params encodingParams) {
+func (i AbsoluteIndirect) operands(asm *Assembler, src Operand, params encodingParams) {
 	asm.byte(MODRM(ModeIndir, byte(params.opcodeReg), RegESP))
 	asm.byte(SIB(Scale1, RegESP, RegEBP))
 	asm.int32(uint32(i.offset))
@@ -220,7 +219,7 @@ type ScaledIndirect struct {
 	Indirect
 }
 
-func (i ScaledIndirect) Operands(asm *Assembler, src Operand, params encodingParams) {
+func (i ScaledIndirect) operands(asm *Assembler, src Operand, params encodingParams) {
 	if i.offset == 0 {
 		asm.byte(MODRM(ModeIndir, byte(params.opcodeReg), RegESP))
 		asm.byte(SIB(i.scale, i.index.val&7, i.base.val&7))

@@ -2,6 +2,7 @@ package amd64
 
 import (
 	"errors"
+	"fmt"
 )
 
 type opcode byte
@@ -74,47 +75,58 @@ func (insn *instruction) findVariant(asm *Assembler, dst []VariantKey, src []Var
 			}
 		}
 	}
-	asm.ReportError(errors.New("no variant defined for this operand combination"))
+	asm.ReportError(fmt.Errorf(
+		"no variant defined for this operand combination, dst: %v, src: %v",
+		dst,
+		src))
 	return nil
 }
 
+func zeroOperand(asm *Assembler, insn *instruction) {
+	asm.byte(byte(insn.opcode))
+}
+
 func oneOperand(asm *Assembler, insn *instruction, dst Operand) {
-	variant := insn.findVariant(asm, dst.Conditions(), nil)
+	variant := insn.findVariant(asm, dst.variantKeys(), nil)
 	if variant == nil {
 		return
 	}
 	insn = variant
-	dst.Prefix(asm, nil)
+	dst.prefix(asm, nil)
 	asm.byte(byte(insn.opcode))
-	dst.Operands(asm, nil, encodingParams{
+	dst.operands(asm, nil, encodingParams{
 		opcodeReg: insn.opcodeReg,
 	})
 }
 
 func twoOperands(asm *Assembler, insn *instruction, dst Operand, src Operand) {
-	variant := insn.findVariant(asm, dst.Conditions(), src.Conditions())
+	variant := insn.findVariant(asm, dst.variantKeys(), src.variantKeys())
 	if variant == nil {
 		return
 	}
 	insn = variant
 	if insn.encoding != nil {
-		encode := insn.encoding.(func(*Assembler,*instruction,Operand, Operand))
+		encode := insn.encoding.(func(*Assembler, *instruction, Operand, Operand))
 		encode(asm, insn, dst, src)
 		return
 	}
-	dst.Prefix(asm, src)
+	if src.isMemory() {
+		// memory can only be encoded as dst
+		src, dst = dst, src
+	}
+	dst.prefix(asm, src)
 	asm.byte(byte(insn.opcode))
-	dst.Operands(asm, src, encodingParams{
+	dst.operands(asm, src, encodingParams{
 		opcodeReg: insn.opcodeReg,
 	})
 }
 
 // without MODRM
 func encodingI(asm *Assembler, insn *instruction, dst Operand, src Operand) {
-	dst.Prefix(asm, src)
+	dst.prefix(asm, src)
 	asm.byte(byte(insn.opcode))
-	dst.Operands(asm, src, encodingParams{
-		opcodeReg: insn.opcodeReg,
+	dst.operands(asm, src, encodingParams{
+		opcodeReg:    insn.opcodeReg,
 		withoutMODRM: true,
 	})
 }

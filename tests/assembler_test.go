@@ -10,15 +10,33 @@ import (
 )
 
 func TestAssembler_MakeFunc(t *testing.T) {
-	t.Run("simple case", test.Case(func(ctx context.Context) {
+	t.Run("by bytes", test.Case(func(ctx context.Context) {
 		var ident func(i int) int
 		assembler := amd64.Assembler{
 			Buffer: []uint8{
-				0x48, 0x8B, 0x44, 0x24, 0x08, // mov
-				0x48, 0x89, 0x44, 0x24, 0x10, // mov
+				0x48, 0x8B, 0x44, 0x24, 0x08, // mov rax, qword ptr [rsp + 8]
+				0x48, 0x89, 0x44, 0x24, 0x10, // mov qword ptr [rsp + 0x10], rax
 				0xc3, // ret
 			},
 		}
+		assembler.MakeFunc(&ident)
+		must.Nil(assembler.Error)
+		must.Equal(100, ident(100))
+	}))
+	t.Run("by asm", test.Case(func(ctx context.Context) {
+		assembler := &amd64.Assembler{}
+		assembler.Assemble(
+			MOV, RAX, QWORD(RSP, 0x08),
+			MOV, QWORD(RSP, 0x10), RAX,
+			RET,
+		)
+		must.Nil(assembler.Error)
+		must.Equal([]byte{
+			0x48, 0x8B, 0x44, 0x24, 0x08, // mov rax, qword ptr [rsp + 8]
+			0x48, 0x89, 0x44, 0x24, 0x10, // mov qword ptr [rsp + 0x10], rax
+			0xc3, // ret
+		}, assembler.Buffer)
+		var ident func(i int) int
 		assembler.MakeFunc(&ident)
 		must.Nil(assembler.Error)
 		must.Equal(100, ident(100))

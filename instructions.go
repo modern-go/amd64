@@ -41,8 +41,27 @@ var ADD = &instruction{
 	},
 }
 
-var MOV = ""
-var RET = ""
+var MOV = &instruction{
+	mnemonic: "mov",
+	opcode: 0x88,
+	encoding: twoOperands,
+	variants: variants{
+		{{RM:8},{R:8}}:{},
+		{{RM:16},{R:16}}:{opcode: 0x89},
+		{{RM:32},{R:32}}:{opcode: 0x89},
+		{{RM:64},{R:64}}:{opcode: 0x89},
+		{{R:8},{RM:8}}:{opcode: 0x8a},
+		{{R:16},{RM:16}}:{opcode: 0x8b},
+		{{R:32},{RM:32}}:{opcode: 0x8b},
+		{{R:64},{RM:64}}:{opcode: 0x8b},
+	},
+}
+
+var RET = &instruction{
+	mnemonic: "ret",
+	opcode: 0xc3,
+	encoding: zeroOperand,
+}
 
 var allInstructions = []*instruction{
 	INC,
