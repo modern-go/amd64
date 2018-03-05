@@ -241,4 +241,28 @@ var (
 		{R: 64},
 		{RM: 64},
 	}}
+	XMM0 = Register{"xmm0", 0, 128, []VariantKey{
+		{XMM: true},
+	}}
+	XMM1 = Register{"xmm1", 1, 128, []VariantKey{
+		{XMM: true},
+	}}
+	XMM2 = Register{"xmm2", 2, 128, []VariantKey{
+		{XMM: true},
+	}}
+	XMM3 = Register{"xmm3", 3, 128, []VariantKey{
+		{XMM: true},
+	}}
+	XMM4 = Register{"xmm4", 4, 128, []VariantKey{
+		{XMM: true},
+	}}
+	XMM5 = Register{"xmm5", 5, 128, []VariantKey{
+		{XMM: true},
+	}}
+	XMM6 = Register{"xmm6", 6, 128, []VariantKey{
+		{XMM: true},
+	}}
+	XMM7 = Register{"xmm7", 7, 128, []VariantKey{
+		{XMM: true},
+	}}
 )

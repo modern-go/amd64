@@ -35,6 +35,7 @@ type VariantKey struct {
 	R  byte // register, size
 	M  byte // memory, size
 	RM byte // register or memory, size
+	XMM bool // xmm register
 }
 
 func (insn *instruction) initVariants() {
