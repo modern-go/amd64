@@ -9,8 +9,8 @@ func init() {
 		},
 		comment: "r8,r8",
 		output: []uint8{
-			aka(0x00, ADD.Opcode()),
-			aka(0xd8, MODRM(ModeReg, BL.Value(), AL.Value())),
+			aka(0x02, ADD.Variant([2]VariantKey{{R:8},{RM:8}}).Opcode()),
+			aka(0xc3, MODRM(ModeReg, AL.Value(), BL.Value())),
 		},
 	}, {
 		input: input{
@@ -28,8 +28,8 @@ func init() {
 		comment: "r16,r16",
 		output: []uint8{
 			aka(0x66, Prefix16Bit),
-			aka(0x01, ADD.Variant([2]VariantKey{{RM:16},{R:16}}).Opcode()),
-			aka(0xd8, MODRM(ModeReg, BX.Value(), AX.Value())),
+			aka(0x03, ADD.Variant([2]VariantKey{{R:16},{RM:16}}).Opcode()),
+			aka(0xc3, MODRM(ModeReg, AX.Value(), BX.Value())),
 		},
 	}, {
 		input: input{

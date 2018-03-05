@@ -79,8 +79,8 @@ func (insn *instruction) findVariant(asm *Assembler, dst []VariantKey, src []Var
 		asm.ReportError(errors.New("no variant defined for this operand combination"))
 		return nil, [2]VariantKey{}
 	}
-	for _, s := range src {
-		for _, d := range dst {
+	for _, d := range dst {
+		for _, s := range src {
 			key := [2]VariantKey{d, s}
 			variant := insn.variants[key]
 			if variant != nil {

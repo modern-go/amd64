@@ -145,7 +145,7 @@ var (
 		{R: 8},
 		{RM: 8},
 	}}
-	BX = Register{"bl", 3, 16, []VariantKey{
+	BX = Register{"bx", 3, 16, []VariantKey{
 		{R: 16},
 		{RM: 16},
 	}}
@@ -256,26 +256,34 @@ var (
 	}}
 	XMM0 = Register{"xmm0", 0, 128, []VariantKey{
 		{REG: "xmm"},
+		{REG: "xmm", M: 128},
 	}}
 	XMM1 = Register{"xmm1", 1, 128, []VariantKey{
 		{REG: "xmm"},
+		{REG: "xmm", M: 128},
 	}}
 	XMM2 = Register{"xmm2", 2, 128, []VariantKey{
 		{REG: "xmm"},
+		{REG: "xmm", M: 128},
 	}}
 	XMM3 = Register{"xmm3", 3, 128, []VariantKey{
 		{REG: "xmm"},
+		{REG: "xmm", M: 128},
 	}}
 	XMM4 = Register{"xmm4", 4, 128, []VariantKey{
 		{REG: "xmm"},
+		{REG: "xmm", M: 128},
 	}}
 	XMM5 = Register{"xmm5", 5, 128, []VariantKey{
 		{REG: "xmm"},
+		{REG: "xmm", M: 128},
 	}}
 	XMM6 = Register{"xmm6", 6, 128, []VariantKey{
 		{REG: "xmm"},
+		{REG: "xmm", M: 128},
 	}}
 	XMM7 = Register{"xmm7", 7, 128, []VariantKey{
 		{REG: "xmm"},
+		{REG: "xmm", M: 128},
 	}}
 )

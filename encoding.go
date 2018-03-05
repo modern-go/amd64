@@ -87,3 +87,14 @@ func encodingA(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 	asm.byte(byte(insn.opcode))
 	src.modrm(asm, dst.(Register).Value())
 }
+
+// dst: rm
+// src: reg
+func encodingB(asm *Assembler, insn *instruction, dst Operand, src Operand) {
+	dst.rex(asm, src)
+	if insn.prefix0F {
+		asm.byte(0x0f)
+	}
+	asm.byte(byte(insn.opcode))
+	dst.modrm(asm, src.(Register).Value())
+}

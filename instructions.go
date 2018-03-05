@@ -71,8 +71,8 @@ var MOVAPS = &instruction{
 	opcode:   0x28,
 	encoding: twoOperands,
 	variants: variants{
-		{{REG:"xmm"},{REG:"xmm"}}:{encoding:encodingA},
-		{{REG:"xmm"},{M:128}}:{encoding:encodingA},
+		{{REG:"xmm"},{REG:"xmm",M:128}}:{encoding:encodingA},
+		{{REG:"xmm",M:128},{REG:"xmm"}}:{opcode: 0x29, encoding:encodingB},
 	},
 }
 
