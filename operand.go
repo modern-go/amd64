@@ -24,21 +24,36 @@ type Operand interface {
 	Bits() byte
 }
 
-//type Imm struct {
-//	Val int32
-//}
-//
-//func (i Imm) isOperand() {}
-//func (i Imm) Rex(asm *Assembler, reg Register) {
-//	panic("Imm.Rex")
-//}
-//func (i Imm) ModRM(asm *Assembler, reg Register) {
-//	panic("Imm.AssembleOperands")
-//}
-//
-//func (i Imm) String() string {
-//	return fmt.Sprintf("%v", i.Val)
-//}
+type Immediate struct {
+	val uint32
+	bits byte
+}
+
+func (i Immediate) Prefix(asm *Assembler, src Operand) {
+	panic("can not use immediate as dst operand")
+}
+
+func (i Immediate) Operands(asm *Assembler, src Operand, regOpcode opcode) {
+	panic("can not use immediate as dst operand")
+}
+
+func (i Immediate) isOperand() {
+	panic("Imm.AssembleOperands")
+}
+
+func (i Immediate) String() string {
+	return fmt.Sprintf("%v", i.val)
+}
+
+func (i Immediate) Bits() byte {
+	return i.bits
+}
+
+func (i Immediate) Conditions() []VariantKey {
+	return []VariantKey{
+		{IMM: i.bits},
+	}
+}
 
 type Register struct {
 	desc       string

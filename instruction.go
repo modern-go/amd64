@@ -35,6 +35,7 @@ type VariantKey struct {
 	R  byte // register, size
 	M  byte // memory, size
 	RM byte // register or memory, size
+	IMM byte // immediate, size
 	XMM bool // xmm register
 }
 
@@ -96,4 +97,14 @@ func twoOperands(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 	asm.byte(byte(insn.opcode))
 	srcRegister, _ := src.(Register)
 	dst.Operands(asm, srcRegister, insn.opcodeReg)
+	if imm, isImm := src.(Immediate); isImm {
+		switch imm.bits {
+		case 8:
+			asm.byte(byte(imm.val))
+		case 16:
+			asm.int16(uint16(imm.val))
+		case 32:
+			asm.int32(imm.val)
+		}
+	}
 }

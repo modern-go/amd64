@@ -1,5 +1,17 @@
 package amd64
 
+import "math"
+
+func IMM(val uint32) interface{} {
+	bits := byte(32)
+	if val < math.MaxUint8 {
+		bits = 8
+	} else if val < math.MaxUint16 {
+		bits = 16
+	}
+	return Immediate{val: val, bits: bits}
+}
+
 func QWORD(base Register, offset int) interface{} {
 	return newIndirect(64, base, offset)
 }

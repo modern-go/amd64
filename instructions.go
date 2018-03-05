@@ -30,6 +30,13 @@ var ADD = &instruction{
 	variants: variants{
 		{{RM: 8}, {R: 8}}: {},
 		{{RM: 16}, {R: 16}}: {opcode: 0x01},
+		{{RM: 32}, {R: 32}}: {opcode: 0x01},
+		{{RM: 64}, {R: 64}}: {opcode: 0x01},
+		{{R: 8}, {RM: 8}}: {opcode: 0x02},
+		{{R: 16}, {RM: 16}}: {opcode: 0x03},
+		{{R: 32}, {RM: 32}}: {opcode: 0x03},
+		{{R: 64}, {RM: 64}}: {opcode: 0x03},
+		{{RM: 8}, {IMM: 8}}: {opcode: 0x80},
 	},
 }
 
