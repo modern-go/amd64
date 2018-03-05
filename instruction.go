@@ -15,7 +15,8 @@ type instruction struct {
 	// if not match variant, this opcode will be used by default
 	opcode opcode
 	// secondary opcode
-	opcode2 opcode
+	opcode2  opcode
+	prefix0F bool
 	// OpcodeReg is encoded as reg in modrm
 	opcodeReg opcode
 	encoding  interface{}
@@ -24,6 +25,13 @@ type instruction struct {
 
 func (insn *instruction) Opcode() byte {
 	return byte(insn.opcode)
+}
+
+func (insn *instruction) Prefix0F() byte {
+	if insn.prefix0F {
+		return 0x0f
+	}
+	return 0x00
 }
 
 func (insn *instruction) Variant(key [2]VariantKey) *instruction {
@@ -52,6 +60,9 @@ func (insn *instruction) initVariants() {
 		}
 		if variant.opcodeReg == 0 {
 			variant.opcodeReg = insn.opcodeReg
+		}
+		if insn.prefix0F {
+			variant.prefix0F = true
 		}
 	}
 }
@@ -115,6 +126,9 @@ func twoOperands(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 		src, dst = dst, src
 	}
 	dst.prefix(asm, src)
+	if insn.prefix0F {
+		asm.byte(0x0f)
+	}
 	asm.byte(byte(insn.opcode))
 	dst.operands(asm, src, encodingParams{
 		opcodeReg: insn.opcodeReg,
@@ -124,9 +138,25 @@ func twoOperands(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 // without MODRM
 func encodingI(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 	dst.prefix(asm, src)
+	if insn.prefix0F {
+		asm.byte(0x0f)
+	}
 	asm.byte(byte(insn.opcode))
 	dst.operands(asm, src, encodingParams{
 		opcodeReg:    insn.opcodeReg,
 		withoutMODRM: true,
+	})
+}
+
+// dst in reg, src in r/m
+func encodingA(asm *Assembler, insn *instruction, dst Operand, src Operand) {
+	src, dst = dst, src
+	dst.prefix(asm, src)
+	if insn.prefix0F {
+		asm.byte(0x0f)
+	}
+	asm.byte(byte(insn.opcode))
+	dst.operands(asm, src, encodingParams{
+		opcodeReg:    insn.opcodeReg,
 	})
 }

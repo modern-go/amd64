@@ -65,6 +65,17 @@ var MOV = &instruction{
 	},
 }
 
+var MOVAPS = &instruction{
+	mnemonic: "movaps",
+	prefix0F: true,
+	opcode:   0x28,
+	encoding: twoOperands,
+	variants: variants{
+		{{REG:"xmm"},{REG:"xmm"}}:{encoding:encodingA},
+		{{REG:"xmm"},{M:128}}:{encoding:encodingA},
+	},
+}
+
 var RET = &instruction{
 	mnemonic: "ret",
 	opcode:   0xc3,
@@ -77,6 +88,7 @@ var allInstructions = []*instruction{
 	ADD,
 	MOV,
 	RET,
+	MOVAPS,
 }
 
 func init() {

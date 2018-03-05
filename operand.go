@@ -68,6 +68,7 @@ func (r Register) isMemory() bool { return false }
 
 func (r Register) prefix(asm *Assembler, src Operand) {
 	switch r.bits {
+	case 128:
 	case 64:
 		srcReg, _ := src.(Register)
 		asm.byte(REX(r.bits == 64, srcReg.val > 7, false, r.val > 7))

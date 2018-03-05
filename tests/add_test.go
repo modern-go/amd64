@@ -60,6 +60,5 @@ func init() {
 			aka(0x04, ADD.Variant([2]VariantKey{{REG:"al"},{IMM:8}}).Opcode()),
 			0x02,
 		},
-		selected: true,
 	}}...)
 }
