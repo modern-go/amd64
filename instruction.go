@@ -67,22 +67,24 @@ func (insn *instruction) initVariants() {
 	}
 }
 
-func (insn *instruction) findVariant(asm *Assembler, dst []VariantKey, src []VariantKey) *instruction {
+func (insn *instruction) findVariant(asm *Assembler, dst []VariantKey, src []VariantKey) (*instruction, [2]VariantKey) {
 	if src == nil {
 		for _, c := range dst {
-			variant := insn.variants[[2]VariantKey{c}]
+			key := [2]VariantKey{c}
+			variant := insn.variants[key]
 			if variant != nil {
-				return variant
+				return variant, key
 			}
 		}
 		asm.ReportError(errors.New("no variant defined for this operand combination"))
-		return nil
+		return nil, [2]VariantKey{}
 	}
 	for _, s := range src {
 		for _, d := range dst {
-			variant := insn.variants[[2]VariantKey{d, s}]
+			key := [2]VariantKey{d, s}
+			variant := insn.variants[key]
 			if variant != nil {
-				return variant
+				return variant, key
 			}
 		}
 	}
@@ -90,73 +92,5 @@ func (insn *instruction) findVariant(asm *Assembler, dst []VariantKey, src []Var
 		"no variant defined for this operand combination, dst: %v, src: %v",
 		dst,
 		src))
-	return nil
-}
-
-func zeroOperand(asm *Assembler, insn *instruction) {
-	asm.byte(byte(insn.opcode))
-}
-
-func oneOperand(asm *Assembler, insn *instruction, dst Operand) {
-	variant := insn.findVariant(asm, dst.variantKeys(), nil)
-	if variant == nil {
-		return
-	}
-	insn = variant
-	dst.prefix(asm, nil)
-	asm.byte(byte(insn.opcode))
-	dst.operands(asm, nil, encodingParams{
-		opcodeReg: insn.opcodeReg,
-	})
-}
-
-func twoOperands(asm *Assembler, insn *instruction, dst Operand, src Operand) {
-	variant := insn.findVariant(asm, dst.variantKeys(), src.variantKeys())
-	if variant == nil {
-		return
-	}
-	insn = variant
-	if insn.encoding != nil {
-		encode := insn.encoding.(func(*Assembler, *instruction, Operand, Operand))
-		encode(asm, insn, dst, src)
-		return
-	}
-	if src.isMemory() {
-		// memory can only be encoded as dst
-		src, dst = dst, src
-	}
-	dst.prefix(asm, src)
-	if insn.prefix0F {
-		asm.byte(0x0f)
-	}
-	asm.byte(byte(insn.opcode))
-	dst.operands(asm, src, encodingParams{
-		opcodeReg: insn.opcodeReg,
-	})
-}
-
-// without MODRM
-func encodingI(asm *Assembler, insn *instruction, dst Operand, src Operand) {
-	dst.prefix(asm, src)
-	if insn.prefix0F {
-		asm.byte(0x0f)
-	}
-	asm.byte(byte(insn.opcode))
-	dst.operands(asm, src, encodingParams{
-		opcodeReg:    insn.opcodeReg,
-		withoutMODRM: true,
-	})
-}
-
-// dst in reg, src in r/m
-func encodingA(asm *Assembler, insn *instruction, dst Operand, src Operand) {
-	src, dst = dst, src
-	dst.prefix(asm, src)
-	if insn.prefix0F {
-		asm.byte(0x0f)
-	}
-	asm.byte(byte(insn.opcode))
-	dst.operands(asm, src, encodingParams{
-		opcodeReg:    insn.opcodeReg,
-	})
+	return nil, [2]VariantKey{}
 }

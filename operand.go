@@ -16,8 +16,8 @@ type Operand interface {
 	fmt.Stringer
 
 	isMemory() bool
-	prefix(asm *Assembler, src Operand)
-	operands(asm *Assembler, src Operand, params encodingParams)
+	rex(asm *Assembler, reg Operand)
+	modrm(asm *Assembler, reg byte)
 	variantKeys() []VariantKey
 	Bits() byte
 }
@@ -33,11 +33,11 @@ type Immediate struct {
 	keys []VariantKey
 }
 
-func (i Immediate) prefix(asm *Assembler, src Operand) {
+func (i Immediate) rex(asm *Assembler, reg Operand) {
 	panic("can not use immediate as dst operand")
 }
 
-func (i Immediate) operands(asm *Assembler, src Operand, params encodingParams) {
+func (i Immediate) modrm(asm *Assembler, reg byte) {
 	panic("can not use immediate as dst operand")
 }
 
@@ -66,12 +66,12 @@ type Register struct {
 
 func (r Register) isMemory() bool { return false }
 
-func (r Register) prefix(asm *Assembler, src Operand) {
+func (r Register) rex(asm *Assembler, reg Operand) {
 	switch r.bits {
 	case 128:
 	case 64:
-		srcReg, _ := src.(Register)
-		asm.byte(REX(r.bits == 64, srcReg.val > 7, false, r.val > 7))
+		register, _ := reg.(Register)
+		asm.byte(REX(r.bits == 64, register.val > 7, false, r.val > 7))
 	case 32:
 	case 16:
 		asm.byte(Prefix16Bit)
@@ -82,18 +82,8 @@ func (r Register) prefix(asm *Assembler, src Operand) {
 	}
 }
 
-func (r Register) operands(asm *Assembler, src Operand, params encodingParams) {
-	if !params.withoutMODRM {
-		srcReg, isSrcReg := src.(Register)
-		if isSrcReg {
-			asm.byte(MODRM(ModeReg, byte(srcReg.val), r.val&7))
-		} else {
-			asm.byte(MODRM(ModeReg, byte(params.opcodeReg), r.val&7))
-		}
-	}
-	if imm, isImm := src.(Immediate); isImm {
-		asm.imm(imm)
-	}
+func (r Register) modrm(asm *Assembler, reg byte) {
+	asm.byte(MODRM(ModeReg, reg, r.val&7))
 }
 
 func (r Register) variantKeys() []VariantKey {
@@ -127,7 +117,7 @@ func (i Indirect) isMemory() bool {
 	return true
 }
 
-func (i Indirect) prefix(asm *Assembler, src Operand) {
+func (i Indirect) rex(asm *Assembler, reg Operand) {
 	switch i.base.bits {
 	case 64:
 	case 32:
@@ -138,7 +128,8 @@ func (i Indirect) prefix(asm *Assembler, src Operand) {
 	}
 	switch i.bits {
 	case 64:
-		asm.byte(REX(i.bits == 64, false, false, i.base.val > 7))
+		register, _ := reg.(Register)
+		asm.byte(REX(i.bits == 64, register.val > 7, false, i.base.val > 7))
 	case 32:
 	case 16:
 		asm.byte(Prefix16Bit)
@@ -149,19 +140,19 @@ func (i Indirect) prefix(asm *Assembler, src Operand) {
 	}
 }
 
-func (i Indirect) operands(asm *Assembler, src Operand, params encodingParams) {
+func (i Indirect) modrm(asm *Assembler, reg byte) {
 	if i.offset == 0 {
 		if i.base.val == RegEBP {
-			asm.byte(MODRM(ModeIndirDisp8, byte(params.opcodeReg), i.base.val&7))
+			asm.byte(MODRM(ModeIndirDisp8, reg, i.base.val&7))
 			asm.byte(0)
 		} else {
-			asm.byte(MODRM(ModeIndir, byte(params.opcodeReg), i.base.val&7))
+			asm.byte(MODRM(ModeIndir, reg, i.base.val&7))
 		}
 	} else if i.short() {
-		asm.byte(MODRM(ModeIndirDisp8, byte(params.opcodeReg), i.base.val&7))
+		asm.byte(MODRM(ModeIndirDisp8, reg, i.base.val&7))
 		asm.byte(byte(i.offset))
 	} else {
-		asm.byte(MODRM(ModeIndirDisp32, byte(params.opcodeReg), i.base.val&7))
+		asm.byte(MODRM(ModeIndirDisp32, reg, i.base.val&7))
 		asm.int32(uint32(i.offset))
 	}
 }
@@ -199,8 +190,8 @@ type RipIndirect struct {
 	Indirect
 }
 
-func (i RipIndirect) operands(asm *Assembler, src Operand, params encodingParams) {
-	asm.byte(MODRM(ModeIndir, byte(params.opcodeReg), RegEBP))
+func (i RipIndirect) modrm(asm *Assembler, reg byte) {
+	asm.byte(MODRM(ModeIndir, reg, RegEBP))
 	asm.int32(uint32(i.offset))
 }
 
@@ -208,8 +199,8 @@ type AbsoluteIndirect struct {
 	Indirect
 }
 
-func (i AbsoluteIndirect) operands(asm *Assembler, src Operand, params encodingParams) {
-	asm.byte(MODRM(ModeIndir, byte(params.opcodeReg), RegESP))
+func (i AbsoluteIndirect) modrm(asm *Assembler, reg byte) {
+	asm.byte(MODRM(ModeIndir, reg, RegESP))
 	asm.byte(SIB(Scale1, RegESP, RegEBP))
 	asm.int32(uint32(i.offset))
 }
@@ -220,16 +211,39 @@ type ScaledIndirect struct {
 	Indirect
 }
 
-func (i ScaledIndirect) operands(asm *Assembler, src Operand, params encodingParams) {
+func (i ScaledIndirect) rex(asm *Assembler, reg Operand) {
+	switch i.base.bits {
+	case 64:
+	case 32:
+		asm.byte(Prefix32Bit)
+	default:
+		asm.ReportError(errors.New("unsupported register"))
+		return
+	}
+	switch i.bits {
+	case 64:
+		register, _ := reg.(Register)
+		asm.byte(REX(i.bits == 64, register.val > 7, i.index.val > 7, i.base.val > 7))
+	case 32:
+	case 16:
+		asm.byte(Prefix16Bit)
+	case 8:
+	default:
+		asm.ReportError(errors.New("invalid size"))
+		return
+	}
+}
+
+func (i ScaledIndirect) modrm(asm *Assembler, reg byte) {
 	if i.offset == 0 {
-		asm.byte(MODRM(ModeIndir, byte(params.opcodeReg), RegESP))
+		asm.byte(MODRM(ModeIndir, reg, RegESP))
 		asm.byte(SIB(i.scale, i.index.val&7, i.base.val&7))
 	} else if i.short() {
-		asm.byte(MODRM(ModeIndirDisp8, byte(params.opcodeReg), RegESP))
+		asm.byte(MODRM(ModeIndirDisp8, reg, RegESP))
 		asm.byte(SIB(i.scale, i.index.val&7, i.base.val&7))
 		asm.byte(byte(i.offset))
 	} else {
-		asm.byte(MODRM(ModeIndirDisp32, byte(params.opcodeReg), RegESP))
+		asm.byte(MODRM(ModeIndirDisp32, reg, RegESP))
 		asm.byte(SIB(i.scale, i.index.val&7, i.base.val&7))
 		asm.int32(uint32(i.offset))
 	}
