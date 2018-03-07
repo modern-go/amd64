@@ -94,7 +94,11 @@ func (r Register) vex(asm *Assembler, insn *instruction, reg Operand) {
 		asm.byte(0x0f)
 	case formVEX2:
 		asm.byte(0xc5)
-		asm.byte(VEX2(0, 0, 0, 0))
+		pp := byte(0)
+		if r.bits == 32 {
+			pp = 1
+		}
+		asm.byte(VEX2(0, 0, 0, pp))
 	default:
 		asm.ReportError(fmt.Errorf("unknown vex form: %v", insn.vexForm))
 		return
