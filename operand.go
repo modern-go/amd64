@@ -99,6 +99,10 @@ func (r Register) vex(asm *Assembler, insn *instruction, reg Operand) {
 			pp = 1
 		}
 		asm.byte(VEX2(0, 0, 0, pp))
+	case formVEX3:
+		asm.byte(0xc4)
+		asm.byte(VEX31(0, 0, 0, 2))
+		asm.byte(VEX32(0, 0, 0, 1))
 	default:
 		asm.ReportError(fmt.Errorf("unknown vex form: %v", insn.vexForm))
 		return

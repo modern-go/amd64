@@ -23,8 +23,20 @@ func REX(w, r, x, b bool) byte {
 	return bits
 }
 
-func VEX2(r byte, vvvv byte, l byte, pp byte) byte {
+func VEX2(r, vvvv, l, pp byte) byte {
 	r = (^(r << 7)) & 0x80       // 10000000
 	vvvv = (^(vvvv << 3)) & 0x78 // 01111000
 	return r | vvvv | l<<2 | pp
+}
+
+func VEX31(r, x, b, m byte) byte {
+	r = (^(r << 7)) & 0x80       // 10000000
+	x = (^(x << 6)) & 0x40       // 01000000
+	b = (^(x << 5)) & 0x20       // 00100000
+	return r | x | b | m
+}
+
+func VEX32(w, vvvv, l, pp byte) byte {
+	vvvv = (^(vvvv << 3)) & 0x78 // 01111000
+	return w | vvvv | l<<2 | pp
 }

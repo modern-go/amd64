@@ -105,6 +105,16 @@ var MOVD = &instruction{
 	},
 }
 
+var VPBROADCASTD = &instruction{
+	mnemonic: "vpbroadcastd",
+	vexForm: formVEX3,
+	opcode: 0x58,
+	encoding: twoOperands,
+	variants: variants{
+		{{REG: "xmm"}, {REG: "xmm"}}: {encoding: encodingA},
+	},
+}
+
 var RET = &instruction{
 	mnemonic: "ret",
 	opcode:   0xc3,
@@ -116,10 +126,11 @@ var allInstructions = []*instruction{
 	DEC,
 	ADD,
 	MOV,
-	RET,
 	MOVAPS,
 	VMOVAPS,
 	MOVD,
+	VPBROADCASTD,
+	RET,
 }
 
 func init() {
