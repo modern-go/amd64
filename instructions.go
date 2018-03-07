@@ -62,6 +62,14 @@ var MOV = &instruction{
 		{{R: 16}, {RM: 16}}: {opcode: 0x8b},
 		{{R: 32}, {RM: 32}}: {opcode: 0x8b},
 		{{R: 64}, {RM: 64}}: {opcode: 0x8b},
+		{{REG: "xmm"}, {REG: "xmm", M: 128}}: {
+			// MOVAPS
+			prefix0F: true, opcode: 0x28, encoding: encodingA,
+		},
+		{{REG: "xmm", M: 128}, {REG: "xmm"}}: {
+			// MOVAPS
+			prefix0F: true, opcode: 0x29, encoding: encodingB,
+		},
 	},
 }
 
@@ -71,8 +79,8 @@ var MOVAPS = &instruction{
 	opcode:   0x28,
 	encoding: twoOperands,
 	variants: variants{
-		{{REG:"xmm"},{REG:"xmm",M:128}}:{encoding:encodingA},
-		{{REG:"xmm",M:128},{REG:"xmm"}}:{opcode: 0x29, encoding:encodingB},
+		{{REG: "xmm"}, {REG: "xmm", M: 128}}: {encoding: encodingA},
+		{{REG: "xmm", M: 128}, {REG: "xmm"}}: {opcode: 0x29, encoding: encodingB},
 	},
 }
 

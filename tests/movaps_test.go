@@ -12,5 +12,15 @@ func init() {
 			aka(0x28, MOVAPS.Opcode()),
 			aka(0xca, MODRM(ModeReg, XMM1.Value(), XMM2.Value())),
 		},
+	}, {
+		input: input{
+			MOV, XMM1, XMM2,
+		},
+		output: []uint8{
+			aka(0x0f, MOVAPS.Prefix0F()),
+			aka(0x28, MOVAPS.Opcode()),
+			aka(0xca, MODRM(ModeReg, XMM1.Value(), XMM2.Value())),
+		},
+		selected: true,
 	}}...)
 }
