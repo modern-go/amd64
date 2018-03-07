@@ -40,6 +40,13 @@ func (insn *instruction) Prefix0F() byte {
 	return 0x00
 }
 
+func (insn *instruction) PrefixC5() byte {
+	if insn.vexForm == formVEX2 {
+		return 0xc5
+	}
+	return 0x00
+}
+
 func (insn *instruction) Variant(key [2]VariantKey) *instruction {
 	return insn.variants[key]
 }

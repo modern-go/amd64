@@ -166,6 +166,9 @@ func (i Indirect) vex(asm *Assembler, insn *instruction, reg Operand) {
 	case 0:
 	case form0F:
 		asm.byte(0x0f)
+	case formVEX2:
+		asm.byte(0xc5)
+		asm.byte(VEX2(0, 0, 0, 0))
 	default:
 		asm.ReportError(fmt.Errorf("unknown vex form: %v", insn.vexForm))
 		return
