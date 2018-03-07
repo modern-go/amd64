@@ -10,13 +10,19 @@ type opcode byte
 type variants map[[2]VariantKey]*instruction
 type overrides map[string]interface{}
 
+type vexForm byte
+
+var form0F vexForm = 1
+var formVEX2 vexForm = 2
+var formVEX3 vexForm = 3
+
 type instruction struct {
 	mnemonic string
 	// if not match variant, this opcode will be used by default
 	opcode opcode
 	// secondary opcode
-	opcode2  opcode
-	prefix0F bool
+	opcode2 opcode
+	vexForm    vexForm
 	// OpcodeReg is encoded as reg in modrm
 	opcodeReg opcode
 	encoding  interface{}
@@ -28,7 +34,7 @@ func (insn *instruction) Opcode() byte {
 }
 
 func (insn *instruction) Prefix0F() byte {
-	if insn.prefix0F {
+	if insn.vexForm == form0F {
 		return 0x0f
 	}
 	return 0x00
@@ -61,8 +67,8 @@ func (insn *instruction) initVariants() {
 		if variant.opcodeReg == 0 {
 			variant.opcodeReg = insn.opcodeReg
 		}
-		if insn.prefix0F {
-			variant.prefix0F = true
+		if variant.vexForm == 0 {
+			variant.vexForm = insn.vexForm
 		}
 	}
 }

@@ -22,3 +22,9 @@ func REX(w, r, x, b bool) byte {
 	}
 	return bits
 }
+
+func VEX2(r byte, vvvv byte, l byte, pp byte) byte {
+	r = (^(r << 7)) & 0x80       // 10000000
+	vvvv = (^(vvvv << 3)) & 0x78 // 01111000
+	return r | vvvv | l<<2 | pp
+}

@@ -81,9 +81,7 @@ func encodingI(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 // src: rm
 func encodingA(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 	src.rex(asm, dst)
-	if insn.prefix0F {
-		asm.byte(0x0f)
-	}
+	src.vex(asm, insn, dst)
 	asm.byte(byte(insn.opcode))
 	src.modrm(asm, dst.(Register).Value())
 }
@@ -92,9 +90,7 @@ func encodingA(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 // src: reg
 func encodingB(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 	dst.rex(asm, src)
-	if insn.prefix0F {
-		asm.byte(0x0f)
-	}
+	dst.vex(asm, insn, src)
 	asm.byte(byte(insn.opcode))
 	dst.modrm(asm, src.(Register).Value())
 }

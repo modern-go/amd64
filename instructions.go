@@ -64,18 +64,29 @@ var MOV = &instruction{
 		{{R: 64}, {RM: 64}}: {opcode: 0x8b},
 		{{REG: "xmm"}, {REG: "xmm", M: 128}}: {
 			// MOVAPS
-			prefix0F: true, opcode: 0x28, encoding: encodingA,
+			vexForm: form0F, opcode: 0x28, encoding: encodingA,
 		},
 		{{REG: "xmm", M: 128}, {REG: "xmm"}}: {
 			// MOVAPS
-			prefix0F: true, opcode: 0x29, encoding: encodingB,
+			vexForm: form0F, opcode: 0x29, encoding: encodingB,
 		},
 	},
 }
 
 var MOVAPS = &instruction{
 	mnemonic: "movaps",
-	prefix0F: true,
+	vexForm: form0F,
+	opcode:   0x28,
+	encoding: twoOperands,
+	variants: variants{
+		{{REG: "xmm"}, {REG: "xmm", M: 128}}: {encoding: encodingA},
+		{{REG: "xmm", M: 128}, {REG: "xmm"}}: {opcode: 0x29, encoding: encodingB},
+	},
+}
+
+var VMOVAPS = &instruction{
+	mnemonic: "vmovaps",
+	vexForm: formVEX2,
 	opcode:   0x28,
 	encoding: twoOperands,
 	variants: variants{
@@ -97,6 +108,7 @@ var allInstructions = []*instruction{
 	MOV,
 	RET,
 	MOVAPS,
+	VMOVAPS,
 }
 
 func init() {

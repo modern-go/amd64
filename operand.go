@@ -17,6 +17,7 @@ type Operand interface {
 
 	isMemory() bool
 	rex(asm *Assembler, reg Operand)
+	vex(asm *Assembler, insn *instruction, reg Operand)
 	modrm(asm *Assembler, reg byte)
 	variantKeys() []VariantKey
 	Bits() byte
@@ -34,6 +35,10 @@ type Immediate struct {
 }
 
 func (i Immediate) rex(asm *Assembler, reg Operand) {
+	panic("can not use immediate as dst operand")
+}
+
+func (i Immediate) vex(asm *Assembler, insn *instruction, reg Operand) {
 	panic("can not use immediate as dst operand")
 }
 
@@ -82,6 +87,20 @@ func (r Register) rex(asm *Assembler, reg Operand) {
 	}
 }
 
+func (r Register) vex(asm *Assembler, insn *instruction, reg Operand) {
+	switch insn.vexForm {
+	case 0:
+	case form0F:
+		asm.byte(0x0f)
+	case formVEX2:
+		asm.byte(0xc5)
+		asm.byte(VEX2(0, 0, 0, 0))
+	default:
+		asm.ReportError(fmt.Errorf("unknown vex form: %v", insn.vexForm))
+		return
+	}
+}
+
 func (r Register) modrm(asm *Assembler, reg byte) {
 	asm.byte(MODRM(ModeReg, reg, r.val&7))
 }
@@ -103,10 +122,10 @@ func (r Register) String() string {
 }
 
 type Indirect struct {
-	base       Register
-	offset     int32
-	bits       byte
-	keys []VariantKey
+	base   Register
+	offset int32
+	bits   byte
+	keys   []VariantKey
 }
 
 func (i Indirect) short() bool {
@@ -136,6 +155,17 @@ func (i Indirect) rex(asm *Assembler, reg Operand) {
 	case 8:
 	default:
 		asm.ReportError(errors.New("invalid size"))
+		return
+	}
+}
+
+func (i Indirect) vex(asm *Assembler, insn *instruction, reg Operand) {
+	switch insn.vexForm {
+	case 0:
+	case form0F:
+		asm.byte(0x0f)
+	default:
+		asm.ReportError(fmt.Errorf("unknown vex form: %v", insn.vexForm))
 		return
 	}
 }
