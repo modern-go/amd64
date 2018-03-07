@@ -12,6 +12,10 @@ func IMM(val uint32) interface{} {
 	return Immediate{val: val, bits: bits, keys: []VariantKey{{IMM: bits}}}
 }
 
+func XMMWORD(base Register, offset int) interface{} {
+	return newIndirect(128, base, offset)
+}
+
 func QWORD(base Register, offset int) interface{} {
 	return newIndirect(64, base, offset)
 }
@@ -48,15 +52,19 @@ func newIndirect(bits byte, base Register, offset int) interface{} {
 	if base.val == RegESP {
 		return newSibIndirect(bits,0, base, base, offset)
 	}
+	keys := []VariantKey{{
+		M: bits,
+	}, {
+		RM: bits,
+	}}
+	if bits == 128 {
+		keys = append(keys, VariantKey{REG: "xmm", M: 128})
+	}
 	indirect := Indirect{
 		base:   base,
 		offset: int32(offset),
 		bits:   bits,
-		keys: []VariantKey{{
-			M: bits,
-		}, {
-			RM: bits,
-		}},
+		keys: keys,
 	}
 	switch base.desc {
 	case RIP.desc:

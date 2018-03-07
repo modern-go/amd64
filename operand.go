@@ -138,6 +138,7 @@ func (i Indirect) isMemory() bool {
 
 func (i Indirect) rex(asm *Assembler, reg Operand) {
 	switch i.base.bits {
+	case 128:
 	case 64:
 	case 32:
 		asm.byte(Prefix32Bit)
@@ -146,6 +147,7 @@ func (i Indirect) rex(asm *Assembler, reg Operand) {
 		return
 	}
 	switch i.bits {
+	case 128:
 	case 64:
 		register, _ := reg.(Register)
 		asm.byte(REX(i.bits == 64, register.val > 7, false, i.base.val > 7))
@@ -243,6 +245,7 @@ type ScaledIndirect struct {
 
 func (i ScaledIndirect) rex(asm *Assembler, reg Operand) {
 	switch i.base.bits {
+	case 128:
 	case 64:
 	case 32:
 		asm.byte(Prefix32Bit)
@@ -251,6 +254,7 @@ func (i ScaledIndirect) rex(asm *Assembler, reg Operand) {
 		return
 	}
 	switch i.bits {
+	case 128:
 	case 64:
 		register, _ := reg.(Register)
 		asm.byte(REX(i.bits == 64, register.val > 7, i.index.val > 7, i.base.val > 7))
