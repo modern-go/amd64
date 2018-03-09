@@ -75,6 +75,7 @@ func encodingMR(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 // dst: reg
 // src: rm
 func encodingRM(asm *Assembler, insn *instruction, dst Operand, src Operand) {
+	src.vex(asm, insn, nil)
 	src.rex(asm, dst)
 	asm.byte(byte(insn.opcode))
 	src.modrm(asm, dst.(Register).Value())

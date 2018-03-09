@@ -16,6 +16,7 @@ func Test_simd(t *testing.T) {
 		asm.Assemble(VPCMPEQD, XMM1, XMM0, XMMWORD(RSI, 0))
 		asm.Assemble(VPACKSSDW, XMM1, XMM1, XMM2)
 		asm.Assemble(VPACKSSWB, XMM1, XMM1, XMM2)
+		asm.Assemble(VPMOVMSKB, ECX, XMM1)
 		must.Nil(asm.Error)
 		must.Equal([]byte{
 			0xc5, 0xf9, 0x6e, 0xc7, // vmovd xmm0,edi
@@ -23,6 +24,7 @@ func Test_simd(t *testing.T) {
 			0xc5, 0xf9, 0x76, 0x0e, // vpcmpeqd xmm1, xmm0, xmmword ptr [rsi]
 			0xc5, 0xf1, 0x6b, 0xca, // vpackssdw xmm1, xmm1, xmm2
 			0xc5, 0xf1, 0x63, 0xca, // vpacksswb xmm1, xmm1, xmm2
+			0xc5, 0xf9, 0xd7, 0xc9, // vpmovmskb ecx, xmm1
 		},
 			asm.Buffer)
 	}))
