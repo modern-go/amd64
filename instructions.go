@@ -98,6 +98,7 @@ var VMOVAPS = &instruction{
 var MOVD = &instruction{
 	mnemonic: "movd",
 	vexForm: formVEX2,
+	vexPP: 1,
 	opcode: 0x6e,
 	encoding: twoOperands,
 	variants: variants{
@@ -108,10 +109,22 @@ var MOVD = &instruction{
 var VPBROADCASTD = &instruction{
 	mnemonic: "vpbroadcastd",
 	vexForm: formVEX3,
+	vexPP: 1,
 	opcode: 0x58,
 	encoding: twoOperands,
 	variants: variants{
 		{{REG: "xmm"}, {REG: "xmm"}}: {encoding: encodingA},
+	},
+}
+
+var VPCMPEQD = &instruction{
+	mnemonic: "vpcmpeqd",
+	vexForm: formVEX2,
+	vexPP: 1,
+	opcode: 0x76,
+	encoding: threeOperands,
+	variants: variants{
+		{{REG:"xmm"},{REG:"xmm"},{REG:"xmm",M:128}}: {encoding: encodingB3},
 	},
 }
 
@@ -130,6 +143,7 @@ var allInstructions = []*instruction{
 	VMOVAPS,
 	MOVD,
 	VPBROADCASTD,
+	VPCMPEQD,
 	RET,
 }
 

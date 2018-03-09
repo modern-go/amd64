@@ -19,7 +19,7 @@ type Operand interface {
 	rex(asm *Assembler, reg Operand)
 	vex(asm *Assembler, insn *instruction, reg Operand)
 	modrm(asm *Assembler, reg byte)
-	variantKeys() []VariantKey
+	Qualifiers() []Qualifier
 	Bits() byte
 }
 
@@ -29,9 +29,9 @@ type encodingParams struct {
 }
 
 type Immediate struct {
-	val  uint32
-	bits byte
-	keys []VariantKey
+	val        uint32
+	bits       byte
+	qualifiers []Qualifier
 }
 
 func (i Immediate) rex(asm *Assembler, reg Operand) {
@@ -58,15 +58,15 @@ func (i Immediate) Bits() byte {
 	return i.bits
 }
 
-func (i Immediate) variantKeys() []VariantKey {
-	return i.keys
+func (i Immediate) Qualifiers() []Qualifier {
+	return i.qualifiers
 }
 
 type Register struct {
-	desc string
-	val  byte
-	bits byte
-	keys []VariantKey
+	desc       string
+	val        byte
+	bits       byte
+	qualifiers []Qualifier
 }
 
 func (r Register) isMemory() bool { return false }
@@ -94,15 +94,11 @@ func (r Register) vex(asm *Assembler, insn *instruction, reg Operand) {
 		asm.byte(0x0f)
 	case formVEX2:
 		asm.byte(0xc5)
-		pp := byte(0)
-		if r.bits == 32 {
-			pp = 1
-		}
-		asm.byte(VEX2(0, 0, 0, pp))
+		asm.byte(VEX2(0, 0, 0, insn.vexPP))
 	case formVEX3:
 		asm.byte(0xc4)
 		asm.byte(VEX31(0, 0, 0, 2))
-		asm.byte(VEX32(0, 0, 0, 1))
+		asm.byte(VEX32(0, 0, 0, insn.vexPP))
 	default:
 		asm.ReportError(fmt.Errorf("unknown vex form: %v", insn.vexForm))
 		return
@@ -113,8 +109,8 @@ func (r Register) modrm(asm *Assembler, reg byte) {
 	asm.byte(MODRM(ModeReg, reg, r.val&7))
 }
 
-func (r Register) variantKeys() []VariantKey {
-	return r.keys
+func (r Register) Qualifiers() []Qualifier {
+	return r.qualifiers
 }
 
 func (r Register) Bits() byte {
@@ -130,10 +126,10 @@ func (r Register) String() string {
 }
 
 type Indirect struct {
-	base   Register
-	offset int32
-	bits   byte
-	keys   []VariantKey
+	base       Register
+	offset     int32
+	bits       byte
+	qualifiers []Qualifier
 }
 
 func (i Indirect) short() bool {
@@ -176,7 +172,7 @@ func (i Indirect) vex(asm *Assembler, insn *instruction, reg Operand) {
 		asm.byte(0x0f)
 	case formVEX2:
 		asm.byte(0xc5)
-		asm.byte(VEX2(0, 0, 0, 0))
+		asm.byte(VEX2(0, 0, 0, insn.vexPP))
 	default:
 		asm.ReportError(fmt.Errorf("unknown vex form: %v", insn.vexForm))
 		return
@@ -200,8 +196,8 @@ func (i Indirect) modrm(asm *Assembler, reg byte) {
 	}
 }
 
-func (i Indirect) variantKeys() []VariantKey {
-	return i.keys
+func (i Indirect) Qualifiers() []Qualifier {
+	return i.qualifiers
 }
 
 func (i Indirect) Bits() byte {

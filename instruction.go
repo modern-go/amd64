@@ -7,8 +7,8 @@ import (
 
 type opcode byte
 
-type variants map[[2]VariantKey]*instruction
-type overrides map[string]interface{}
+type VariantKey [3]Qualifier
+type variants map[VariantKey]*instruction
 
 type vexForm byte
 
@@ -23,10 +23,11 @@ type instruction struct {
 	// secondary opcode
 	opcode2 opcode
 	vexForm    vexForm
+	vexPP      byte
 	// OpcodeReg is encoded as reg in modrm
 	opcodeReg opcode
 	encoding  interface{}
-	variants  map[[2]VariantKey]*instruction
+	variants  map[VariantKey]*instruction
 }
 
 func (insn *instruction) Opcode() byte {
@@ -47,7 +48,7 @@ func (insn *instruction) PrefixC5() byte {
 	return 0x00
 }
 
-func (insn *instruction) Variant(key [2]VariantKey) *instruction {
+func (insn *instruction) Variant(key VariantKey) *instruction {
 	return insn.variants[key]
 }
 
@@ -55,7 +56,7 @@ func (insn *instruction) OpcodeReg() byte {
 	return byte(insn.opcodeReg)
 }
 
-type VariantKey struct {
+type Qualifier struct {
 	R   byte   // register, size
 	M   byte   // memory, size
 	RM  byte   // register or memory, size
@@ -77,33 +78,54 @@ func (insn *instruction) initVariants() {
 		if variant.vexForm == 0 {
 			variant.vexForm = insn.vexForm
 		}
+		if variant.vexPP == 0 {
+			variant.vexPP = insn.vexPP
+		}
 	}
 }
 
-func (insn *instruction) findVariant(asm *Assembler, dst []VariantKey, src []VariantKey) (*instruction, [2]VariantKey) {
-	if src == nil {
+func (insn *instruction) findVariant(
+	asm *Assembler, dst []Qualifier, src1 []Qualifier, src2 []Qualifier) (*instruction, VariantKey) {
+	if src1 == nil && src2 == nil {
 		for _, c := range dst {
-			key := [2]VariantKey{c}
+			key := VariantKey{c}
 			variant := insn.variants[key]
 			if variant != nil {
 				return variant, key
 			}
 		}
 		asm.ReportError(errors.New("no variant defined for this operand combination"))
-		return nil, [2]VariantKey{}
+		return nil, VariantKey{}
+	}
+	if src2 == nil {
+		for _, d := range dst {
+			for _, s := range src1 {
+				key := VariantKey{d, s}
+				variant := insn.variants[key]
+				if variant != nil {
+					return variant, key
+				}
+			}
+		}
+		asm.ReportError(fmt.Errorf(
+			"no variant defined for this operand combination, dst: %v, src: %v",
+			dst,
+			src1))
+		return nil, VariantKey{}
 	}
 	for _, d := range dst {
-		for _, s := range src {
-			key := [2]VariantKey{d, s}
-			variant := insn.variants[key]
-			if variant != nil {
-				return variant, key
+		for _, s1 := range src1 {
+			for _, s2 := range src2 {
+				key := VariantKey{d, s1, s2}
+				variant := insn.variants[key]
+				if variant != nil {
+					return variant, key
+				}
 			}
 		}
 	}
 	asm.ReportError(fmt.Errorf(
-		"no variant defined for this operand combination, dst: %v, src: %v",
-		dst,
-		src))
-	return nil, [2]VariantKey{}
+		"no variant defined for this operand combination, dst: %v, src1: %v, src2: %v",
+		dst, src1, src2))
+	return nil, VariantKey{}
 }

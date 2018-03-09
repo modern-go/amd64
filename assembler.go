@@ -56,6 +56,24 @@ func (asm *Assembler) Assemble(instructions ...interface{}) {
 			}
 			assemble(asm, insn, operand1, operand2)
 			instructions = instructions[3:]
+		case func(a *Assembler, insn *instruction, operand1 Operand, operand2 Operand, operand3 Operand):
+			operand1, _ := instructions[1].(Operand)
+			if operand1 == nil {
+				asm.ReportError(fmt.Errorf("not operand: %v", operand1))
+				return
+			}
+			operand2, _ := instructions[2].(Operand)
+			if operand2 == nil {
+				asm.ReportError(fmt.Errorf("not operand: %v", operand2))
+				return
+			}
+			operand3, _ := instructions[3].(Operand)
+			if operand3 == nil {
+				asm.ReportError(fmt.Errorf("not operand: %v", operand2))
+				return
+			}
+			assemble(asm, insn, operand1, operand2, operand3)
+			instructions = instructions[4:]
 		default:
 			asm.ReportError(fmt.Errorf("unsupported: %v", insn))
 			return

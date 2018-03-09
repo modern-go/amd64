@@ -30,7 +30,7 @@ func init() {
 		},
 		comment: "al is 8 bit, has a different opcode",
 		output: []uint8{
-			aka(0xfe, INC.Variant([2]VariantKey{{RM: 8}}).Opcode()),
+			aka(0xfe, INC.Variant(VariantKey{{RM: 8}}).Opcode()),
 			aka(0xc0, MODRM(ModeReg, 0, AL.Value())),
 		},
 	}, {

@@ -56,7 +56,7 @@ func init() {
 		},
 		output: []uint8{
 			aka(0x0f, MOVAPS.Prefix0F()),
-			aka(0x29, MOVAPS.Variant([2]VariantKey{{REG: "xmm", M: 128}, {REG: "xmm"}}).Opcode()),
+			aka(0x29, MOVAPS.Variant(VariantKey{{REG: "xmm", M: 128}, {REG: "xmm"}}).Opcode()),
 			aka(0x0b, MODRM(ModeIndir, XMM1.Value(), RBX.Value())),
 		},
 	}, {
@@ -66,7 +66,7 @@ func init() {
 		output: []uint8{
 			aka(0xc5, VMOVAPS.PrefixC5()),
 			aka(0xf8, VEX2(0, 0, 0, 0)),
-			aka(0x29, MOVAPS.Variant([2]VariantKey{{REG: "xmm", M: 128}, {REG: "xmm"}}).Opcode()),
+			aka(0x29, MOVAPS.Variant(VariantKey{{REG: "xmm", M: 128}, {REG: "xmm"}}).Opcode()),
 			aka(0x0b, MODRM(ModeIndir, XMM1.Value(), RBX.Value())),
 		},
 	}}...)

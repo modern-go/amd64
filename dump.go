@@ -24,6 +24,8 @@ func Dump(instructions ...interface{}) string {
 			operandsCount = 1
 		case func(a *Assembler, insn *instruction, operand1 Operand, operand2 Operand):
 			operandsCount = 2
+		case func(a *Assembler, insn *instruction, operand1 Operand, operand2 Operand, operand3 Operand):
+			operandsCount = 3
 		default:
 			desc = append(desc, " %unknown%"...)
 		}

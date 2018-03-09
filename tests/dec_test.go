@@ -17,7 +17,7 @@ func init() {
 			DEC, AL,
 		},
 		output: []uint8{
-			aka(0xfe, DEC.Variant([2]VariantKey{{RM: 8}}).Opcode()),
+			aka(0xfe, DEC.Variant(VariantKey{{RM: 8}}).Opcode()),
 			aka(0xc8, MODRM(ModeReg, DEC.OpcodeReg(), AL.Value())),
 		},
 	}}...)

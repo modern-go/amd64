@@ -5,7 +5,7 @@ func zeroOperand(asm *Assembler, insn *instruction) {
 }
 
 func oneOperand(asm *Assembler, insn *instruction, dst Operand) {
-	variant, _ := insn.findVariant(asm, dst.variantKeys(), nil)
+	variant, _ := insn.findVariant(asm, dst.Qualifiers(), nil, nil)
 	if variant == nil {
 		return
 	}
@@ -18,7 +18,7 @@ func oneOperand(asm *Assembler, insn *instruction, dst Operand) {
 }
 
 func twoOperands(asm *Assembler, insn *instruction, dst Operand, src Operand) {
-	variant, key := insn.findVariant(asm, dst.variantKeys(), src.variantKeys())
+	variant, key := insn.findVariant(asm, dst.Qualifiers(), src.Qualifiers(), nil)
 	if variant == nil {
 		return
 	}
@@ -35,6 +35,17 @@ func twoOperands(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 		}
 	}
 	encoding(asm, insn, dst, src)
+}
+
+
+func threeOperands(asm *Assembler, insn *instruction, dst, src1, src2 Operand) {
+	variant, _ := insn.findVariant(asm, dst.Qualifiers(), src1.Qualifiers(), src2.Qualifiers())
+	if variant == nil {
+		return
+	}
+	insn = variant
+	encoding, _ := insn.encoding.(func(*Assembler, *instruction, Operand, Operand, Operand))
+	encoding(asm, insn, dst, src1, src2)
 }
 
 // dst: rm
@@ -93,4 +104,13 @@ func encodingB(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 	dst.vex(asm, insn, src)
 	asm.byte(byte(insn.opcode))
 	dst.modrm(asm, src.(Register).Value())
+}
+
+// dst: modrm reg
+// src1: vex.vvvv
+// src2: modrm rm
+func encodingB3(asm *Assembler, insn *instruction, dst, src1, src2 Operand) {
+	src2.vex(asm, insn, src1)
+	asm.byte(byte(insn.opcode))
+	src2.modrm(asm, dst.(Register).Value())
 }

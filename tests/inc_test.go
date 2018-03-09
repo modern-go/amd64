@@ -60,7 +60,7 @@ func init() {
 			INC, BYTE(RAX, 0),
 		},
 		output: []uint8{
-			aka(0xfe, INC.Variant([2]VariantKey{{RM: 8}}).Opcode()),
+			aka(0xfe, INC.Variant(VariantKey{{RM: 8}}).Opcode()),
 			aka(0x00, MODRM(ModeIndir, 0, RAX.Value())),
 		},
 	}, {
@@ -69,7 +69,7 @@ func init() {
 		},
 		output: []uint8{
 			aka(0x67, Prefix32Bit),
-			aka(0xfe, INC.Variant([2]VariantKey{{RM: 8}}).Opcode()),
+			aka(0xfe, INC.Variant(VariantKey{{RM: 8}}).Opcode()),
 			aka(0x00, MODRM(ModeIndir, 0, RAX.Value())),
 		},
 	}, {
