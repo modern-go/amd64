@@ -58,7 +58,7 @@ func init() {
 		output: []uint8{
 			aka(0x49, REX(true, false, false, true)),
 			aka(0xff, INC.Opcode()),
-			aka(0xc3, MODRM(ModeReg, 0, R11.Value() - 8)),
+			aka(0xc3, MODRM(ModeReg, 0, R11.Value()-8)),
 		},
 	}}...)
 }

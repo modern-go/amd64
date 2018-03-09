@@ -22,8 +22,8 @@ type instruction struct {
 	opcode opcode
 	// secondary opcode
 	opcode2 opcode
-	vexForm    vexForm
-	vexPP      byte
+	vexForm vexForm
+	vexPP   byte
 	// OpcodeReg is encoded as reg in modrm
 	opcodeReg opcode
 	encoding  interface{}

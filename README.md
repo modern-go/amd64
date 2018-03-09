@@ -1,5 +1,12 @@
 # AMD64 Instruction Assembler
 
+[![Sourcegraph](https://sourcegraph.com/github.com/modern-go/amd64/-/badge.svg)](https://sourcegraph.com/github.com/modern-go/amd64?badge)
+[![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](http://godoc.org/github.com/modern-go/amd64)
+[![Build Status](https://travis-ci.org/modern-go/amd64.svg?branch=master)](https://travis-ci.org/modern-go/amd64)
+[![codecov](https://codecov.io/gh/modern-go/amd64/branch/master/graph/badge.svg)](https://codecov.io/gh/modern-go/amd64)
+[![rcard](https://goreportcard.com/badge/github.com/modern-go/amd64)](https://goreportcard.com/report/github.com/modern-go/amd64)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://raw.githubusercontent.com/modern-go/amd64/master/LICENSE)
+
 * generate code during runtime: assembler, but run in your process
 * Go assembly does not support all SIMD instruction
 

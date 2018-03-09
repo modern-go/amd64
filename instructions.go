@@ -75,7 +75,7 @@ var MOV = &instruction{
 
 var MOVAPS = &instruction{
 	mnemonic: "movaps",
-	vexForm: form0F,
+	vexForm:  form0F,
 	opcode:   0x28,
 	encoding: twoOperands,
 	variants: variants{
@@ -86,7 +86,7 @@ var MOVAPS = &instruction{
 
 var VMOVAPS = &instruction{
 	mnemonic: "vmovaps",
-	vexForm: formVEX2,
+	vexForm:  formVEX2,
 	opcode:   0x28,
 	encoding: twoOperands,
 	variants: variants{
@@ -97,9 +97,9 @@ var VMOVAPS = &instruction{
 
 var MOVD = &instruction{
 	mnemonic: "movd",
-	vexForm: formVEX2,
-	vexPP: 1,
-	opcode: 0x6e,
+	vexForm:  formVEX2,
+	vexPP:    1,
+	opcode:   0x6e,
 	encoding: twoOperands,
 	variants: variants{
 		{{REG: "xmm"}, {RM: 32}}: {encoding: encodingA},
@@ -108,9 +108,9 @@ var MOVD = &instruction{
 
 var VPBROADCASTD = &instruction{
 	mnemonic: "vpbroadcastd",
-	vexForm: formVEX3,
-	vexPP: 1,
-	opcode: 0x58,
+	vexForm:  formVEX3,
+	vexPP:    1,
+	opcode:   0x58,
 	encoding: twoOperands,
 	variants: variants{
 		{{REG: "xmm"}, {REG: "xmm"}}: {encoding: encodingA},
@@ -119,68 +119,68 @@ var VPBROADCASTD = &instruction{
 
 var VPCMPEQD = &instruction{
 	mnemonic: "vpcmpeqd",
-	vexForm: formVEX2,
-	vexPP: 1,
-	opcode: 0x76,
+	vexForm:  formVEX2,
+	vexPP:    1,
+	opcode:   0x76,
 	encoding: threeOperands,
 	variants: variants{
-		{{REG:"xmm"},{REG:"xmm"},{REG:"xmm",M:128}}: {encoding: encodingB3},
+		{{REG: "xmm"}, {REG: "xmm"}, {REG: "xmm", M: 128}}: {encoding: encodingB3},
 	},
 }
 
 var VPACKSSDW = &instruction{
 	mnemonic: "vpackssdw",
-	vexForm: formVEX2,
-	vexPP: 1,
-	opcode: 0x6b,
+	vexForm:  formVEX2,
+	vexPP:    1,
+	opcode:   0x6b,
 	encoding: threeOperands,
 	variants: variants{
-		{{REG:"xmm"},{REG:"xmm"},{REG:"xmm",M:128}}: {encoding: encodingB3},
+		{{REG: "xmm"}, {REG: "xmm"}, {REG: "xmm", M: 128}}: {encoding: encodingB3},
 	},
 }
 
 var VPACKSSWB = &instruction{
 	mnemonic: "vpacksswb",
-	vexForm: formVEX2,
-	vexPP: 1,
-	opcode: 0x63,
+	vexForm:  formVEX2,
+	vexPP:    1,
+	opcode:   0x63,
 	encoding: threeOperands,
 	variants: variants{
-		{{REG:"xmm"},{REG:"xmm"},{REG:"xmm",M:128}}: {encoding: encodingB3},
+		{{REG: "xmm"}, {REG: "xmm"}, {REG: "xmm", M: 128}}: {encoding: encodingB3},
 	},
 }
 
 var VPMOVMSKB = &instruction{
 	mnemonic: "vpmovmskb",
-	vexForm: formVEX2,
-	vexPP: 1,
-	opcode: 0xd7,
+	vexForm:  formVEX2,
+	vexPP:    1,
+	opcode:   0xd7,
 	encoding: twoOperands,
 	variants: variants{
-		{{R:32},{REG:"xmm"}}: {encoding: encodingRM},
+		{{R: 32}, {REG: "xmm"}}: {encoding: encodingRM},
 	},
 }
 
 var SHL = &instruction{
-	mnemonic: "shl",
-	opcode: 0xc0,
+	mnemonic:  "shl",
+	opcode:    0xc0,
 	opcodeReg: 4,
-	encoding: twoOperands,
+	encoding:  twoOperands,
 	variants: variants{
-		{{RM:16},{IMM:8}}: {opcode:0xc1},
-		{{RM:32},{IMM:8}}: {opcode:0xc1},
-		{{RM:64},{IMM:8}}: {opcode:0xc1},
+		{{RM: 16}, {IMM: 8}}: {opcode: 0xc1},
+		{{RM: 32}, {IMM: 8}}: {opcode: 0xc1},
+		{{RM: 64}, {IMM: 8}}: {opcode: 0xc1},
 	},
 }
 
 var OR = &instruction{
 	mnemonic: "or",
-	opcode: 0x09,
+	opcode:   0x09,
 	encoding: twoOperands,
 	variants: variants{
-		{{RM:16},{R:16}}: {},
-		{{RM:32},{R:32}}: {},
-		{{RM:64},{R:64}}: {},
+		{{RM: 16}, {R: 16}}: {},
+		{{RM: 32}, {R: 32}}: {},
+		{{RM: 64}, {R: 64}}: {},
 	},
 }
 
