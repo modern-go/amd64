@@ -139,6 +139,17 @@ var VPACKSSDW = &instruction{
 	},
 }
 
+var VPACKSSWB = &instruction{
+	mnemonic: "vpacksswb",
+	vexForm: formVEX2,
+	vexPP: 1,
+	opcode: 0x63,
+	encoding: threeOperands,
+	variants: variants{
+		{{REG:"xmm"},{REG:"xmm"},{REG:"xmm",M:128}}: {encoding: encodingB3},
+	},
+}
+
 var RET = &instruction{
 	mnemonic: "ret",
 	opcode:   0xc3,
@@ -156,6 +167,7 @@ var allInstructions = []*instruction{
 	VPBROADCASTD,
 	VPCMPEQD,
 	VPACKSSDW,
+	VPACKSSWB,
 	RET,
 }
 
