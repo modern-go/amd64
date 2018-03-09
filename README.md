@@ -1,9 +1,11 @@
-# amd64
-
-amd64 instruction assembler
+# AMD64 Instruction Assembler
 
 * generate code during runtime: assembler, but run in your process
 * Go assembly does not support all SIMD instruction
+
+This does not support all instructions yet. 
+But it has laid a ground work on instruction encoding abstraction.
+New instruction will be added on demand basis.
 
 # Tutorial
 
