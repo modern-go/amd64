@@ -173,6 +173,17 @@ var SHL = &instruction{
 	},
 }
 
+var OR = &instruction{
+	mnemonic: "or",
+	opcode: 0x09,
+	encoding: twoOperands,
+	variants: variants{
+		{{RM:16},{R:16}}: {},
+		{{RM:32},{R:32}}: {},
+		{{RM:64},{R:64}}: {},
+	},
+}
+
 var RET = &instruction{
 	mnemonic: "ret",
 	opcode:   0xc3,
@@ -193,6 +204,7 @@ var allInstructions = []*instruction{
 	VPACKSSWB,
 	VPMOVMSKB,
 	SHL,
+	OR,
 	RET,
 }
 
