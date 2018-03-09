@@ -15,6 +15,8 @@
 
 package amd64
 
+const PtrSize = 32 << uintptr(^uintptr(0)>>63)
+
 // HaveAVX returns true when there is AVX support
 func HaveAVX() bool {
 	_, _, c, _ := cpuid(1)
