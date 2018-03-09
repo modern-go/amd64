@@ -11,6 +11,9 @@ import (
 
 func Test_simd(t *testing.T) {
 	t.Run("end to end", test.Case(func(ctx context.Context) {
+		if !HaveAVX() {
+			return
+		}
 		asm := &Assembler{}
 		asm.Assemble(
 			MOV, RDI, QWORD(RSP, 8),
