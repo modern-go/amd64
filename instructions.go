@@ -161,6 +161,18 @@ var VPMOVMSKB = &instruction{
 	},
 }
 
+var SHL = &instruction{
+	mnemonic: "shl",
+	opcode: 0xc0,
+	opcodeReg: 4,
+	encoding: twoOperands,
+	variants: variants{
+		{{RM:16},{IMM:8}}: {opcode:0xc1},
+		{{RM:32},{IMM:8}}: {opcode:0xc1},
+		{{RM:64},{IMM:8}}: {opcode:0xc1},
+	},
+}
+
 var RET = &instruction{
 	mnemonic: "ret",
 	opcode:   0xc3,
@@ -180,6 +192,7 @@ var allInstructions = []*instruction{
 	VPACKSSDW,
 	VPACKSSWB,
 	VPMOVMSKB,
+	SHL,
 	RET,
 }
 

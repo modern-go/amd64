@@ -37,7 +37,6 @@ func twoOperands(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 	encoding(asm, insn, dst, src)
 }
 
-
 func threeOperands(asm *Assembler, insn *instruction, dst, src1, src2 Operand) {
 	variant, _ := insn.findVariant(asm, dst.Qualifiers(), src1.Qualifiers(), src2.Qualifiers())
 	if variant == nil {
@@ -60,7 +59,7 @@ func encodingM(asm *Assembler, insn *instruction, dst Operand) {
 func encodingMI(asm *Assembler, insn *instruction, dst Operand, src Operand) {
 	dst.rex(asm, src)
 	asm.byte(byte(insn.opcode))
-	dst.modrm(asm, 0)
+	dst.modrm(asm, byte(insn.opcodeReg))
 	asm.imm(src.(Immediate))
 }
 
