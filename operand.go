@@ -94,7 +94,8 @@ func (r Register) vex(asm *Assembler, insn *instruction, reg Operand) {
 		asm.byte(0x0f)
 	case formVEX2:
 		asm.byte(0xc5)
-		asm.byte(VEX2(0, 0, 0, insn.vexPP))
+		register, _ := reg.(Register)
+		asm.byte(VEX2(0, register.Value(), 0, insn.vexPP))
 	case formVEX3:
 		asm.byte(0xc4)
 		asm.byte(VEX31(0, 0, 0, 2))
